@@ -7,7 +7,7 @@ Vec Scene::get_color(Ray const& ray) const{
   int closest_s;
   bool intersect = false;
 
-  for(long unsigned int i = 0; i < m_spheres.size(); i++){
+  for(long unsigned int i = 0; i < m_spheres.size(); ++i){
     Sphere const& s = *m_spheres[i];
     if(s.intersect(ray)){
       intersect = true;
@@ -33,5 +33,10 @@ Vec Scene::get_color(Ray const& ray) const{
 
 int Scene::add_sphere(Sphere const& s){
   m_spheres.push_back(&s);
+  return m_spheres.size() - 1;
+}
+
+int Scene::add_new_sphere(Sphere s){
+  m_spheres.push_back(new Sphere(s));
   return m_spheres.size() - 1;
 }

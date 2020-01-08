@@ -11,20 +11,27 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Light light(Vec(-10, 20, 40), 1000.0);
+const Light light(Vec(-10, 20, 40), 1500.0);
+
+// colors
+const Vec black(0, 0, 0);
+const Vec red(255, 0, 0);
+const Vec blue(0, 0, 255);
+const Vec green(0, 255, 0);
+const Vec purple(100, 0, 100);
+const Vec white(255, 255, 255);
 
 // Scene
 const Vec c(0, 0, 0);
-const Sphere s(c, 10);
-
 
 int main() {
-  double minI = 1000000;
-  double maxI = 0;
-
   Scene scene(light);
 
-  scene.add_sphere(s);
+  scene.add_new_sphere(Sphere(c, 10, white));
+  scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
+  scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
+  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 990, blue));
+  std::cout << "last index " << scene.add_sphere(Sphere(Vec(0, 0, 1000), 940, purple)) << std::endl;
 
   std::vector<float> image(W*H * 3, 0);
   for (int i = 0; i < H; i++) {
@@ -46,8 +53,6 @@ int main() {
       
     }
   }
-
-  std::cout << "I min max " << minI << " " << maxI << std::endl;
 
   // Convert float intensity to uchar pixel value
   std::vector<unsigned char> file_buffer(W*H * 3, 0);

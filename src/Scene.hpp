@@ -16,7 +16,11 @@ class Scene {
     Scene(Light light):
       m_light(light), m_spheres() {};
     Vec get_color(Ray const& ray) const;
+
+    // add a sphere to the scene with a reference
     int add_sphere(Sphere const& s);
+    // add a sphere to the scene by allocating it
+    int add_new_sphere(Sphere s);
 };
 
 #endif
