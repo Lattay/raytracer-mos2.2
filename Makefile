@@ -24,3 +24,6 @@ build:
 clean:
 	rm -rf build
 
+wipe: clean
+	rm -f *.png
+	rm -f main
