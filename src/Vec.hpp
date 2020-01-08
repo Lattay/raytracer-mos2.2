@@ -12,6 +12,10 @@ class Vec {
     double y() const{return m_y;}
     double z() const{return m_z;}
 
+    double r() const{return m_x;}
+    double g() const{return m_y;}
+    double b() const{return m_z;}
+
     Vec():
       m_x(), m_y(), m_z() {}
     Vec(double x, double y, double z):

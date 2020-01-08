@@ -11,8 +11,7 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Vec light(-10, 20, 40);
-const double I0 = 200000;
+const Light light(Vec(-10, 20, 40), 1000.0);
 
 // Scene
 const Vec c(0, 0, 0);
@@ -22,6 +21,10 @@ const Sphere s(c, 10);
 int main() {
   double minI = 1000000;
   double maxI = 0;
+
+  Scene scene(light);
+
+  scene.add_sphere(s);
 
   std::vector<float> image(W*H * 3, 0);
   for (int i = 0; i < H; i++) {
@@ -35,30 +38,12 @@ int main() {
       Vec dir = Vec(x, y, z).normalized();
       Ray r(origin, dir);
 
-      if(s.intersect(r)){
-        Vec p = s.intersection(r);
+      Vec color = scene.get_color(r);
 
-        Vec n = (p - s.origin()).normalized();
-        Vec vl = light - p;
-
-        double I = I0 * std::max(0.0, n.dot(vl.normalized())) / vl.norm_sq();
-
-        image[(i*W + j) * 3 + 0] = I;
-        image[(i*W + j) * 3 + 1] = I;
-        image[(i*W + j) * 3 + 2] = I;
-
-        if(I > maxI){
-          maxI = I;
-        }
-
-        if(I < minI){
-          minI = I;
-        }
-      } else {
-        image[(i*W + j) * 3 + 0] = 0.0;
-        image[(i*W + j) * 3 + 1] = 0.0;
-        image[(i*W + j) * 3 + 2] = 0.0;
-      }
+      image[(i * W + j) * 3 + 0] = color.r();
+      image[(i * W + j) * 3 + 1] = color.g();
+      image[(i * W + j) * 3 + 2] = color.b();
+      
     }
   }
 

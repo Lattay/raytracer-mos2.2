@@ -12,5 +12,7 @@
 #include "Vec.hpp"
 #include "Sphere.hpp"
 #include "Ray.hpp"
+#include "Scene.hpp"
+#include "Light.hpp"
 
 #endif
