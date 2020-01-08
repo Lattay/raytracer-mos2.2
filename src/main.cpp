@@ -1,23 +1,27 @@
 #include "main.hpp" 
  
 const double pi = 3.141592654;
- 
+
+// Camera
+const int W = 512;
+const int H = 512;
+
+const double fov = pi/3.0;
+
+const Vec origin(0, 0, 55);
+
+// Light source
+const Vec light(-10, 20, 40);
+const double I0 = 200000;
+
+// Scene
+const Vec c(0, 0, 0);
+const Sphere s(c, 10);
+
+
 int main() {
-  int W = 512;
-  int H = 512;
-
-  double fov = pi/3.0;
-
-  Vec origin(0, 0, 55);
-  Vec light(-10, 20, 40);
-  Vec c(0, 0, 0);
-  Sphere s(c, 10);
-
-  double I0 = 500000;
-
   double minI = 1000000;
   double maxI = 0;
-
 
   std::vector<float> image(W*H * 3, 0);
   for (int i = 0; i < H; i++) {

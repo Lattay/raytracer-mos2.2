@@ -14,8 +14,8 @@ class Sphere {
     Sphere(Vec origin, double radius):
       m_origin(origin), m_radius(radius) {};
 
-    double r(){return m_radius;};
-    Vec origin(){return m_origin;};
+    double r() const{return m_radius;};
+    Vec origin() const{return m_origin;};
     bool intersect(Ray const& r) const;
     Vec intersection(Ray const& r) const;
 };

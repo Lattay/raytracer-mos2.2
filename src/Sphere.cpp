@@ -12,7 +12,7 @@ bool Sphere::intersect(Ray const& r) const{
 
   double t1 = (-b - sqrt(delta)) / 2.0;
   double t2 = (-b + sqrt(delta)) / 2.0;
-  return t1 <= 0 || t2 <= 0;
+  return (t1 >= 0) || (t2 >= 0);
 }
 
 Vec Sphere::intersection(Ray const& r) const{
@@ -27,8 +27,9 @@ Vec Sphere::intersection(Ray const& r) const{
   double t1 = (-b - sqrt(delta)) / 2.0;
   double t2 = (-b + sqrt(delta)) / 2.0;
 
-  if(t1 <= 0){
+  if(t2 < 0){
     // ERROR
   }
-  return std::min(t1, t2) * r.direction() + r.origin();
+
+  return r.origin() + (t1 > 0.0 ? t1 : t2) * r.direction();
 }
