@@ -1,16 +1,22 @@
-CC=g++
-CFLAGS=-Wall -Wpedantic -Wextras
+CPP=g++
+CFLAGS=-Wall -Wextra --std=c++11
 LFLAFS=
+SRC=$(wildcard src/*.cpp)
+OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 
-.PHONY: all clean
+.PHONY: all clean run
 
 all: main
 
-main: build/main.o
-	$(CC) $(LFLAGS) $^ -o $@
+run: main
+	./main
+	xdg-open ./image.png
 
-build/%.o: src/%.cpp src/%.hpp
-	$(CC) $(CFLAGS) $< -o $@
+main: $(OBJ)
+	$(CPP) $(LFLAGS) $^ -o $@
+
+build/%.o: src/%.cpp src/%.hpp build
+	$(CPP) $(CFLAGS) -c $< -o $@
 
 build:
 	mkdir build

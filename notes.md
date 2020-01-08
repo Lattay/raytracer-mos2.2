@@ -34,6 +34,3 @@ Intersection avec une sphère de rayon R et de centre O
 
 {t / t^2.||u||^2 + 2t<u | C - O> + ||C - O||^2 - R^2 = 0
 ```
-
-
-
