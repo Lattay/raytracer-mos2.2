@@ -1,4 +1,4 @@
 build
 main
-*.png
+./*.png
 notes.md
