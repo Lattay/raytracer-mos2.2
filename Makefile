@@ -15,7 +15,7 @@ run: main
 main: $(OBJ)
 	$(CPP) $(LFLAGS) $^ -o $@
 
-build/%.o: src/%.cpp src/%.hpp build
+build/%.o: src/%.cpp src/%.hpp
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 tags: $(SRC)
