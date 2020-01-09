@@ -11,27 +11,28 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Light light(Vec(-10, 20, 40), 1500.0);
+const Light light(Vec(-10, 20, 40), 2e8);
 
 // colors
 const Vec black(0, 0, 0);
-const Vec red(255, 0, 0);
-const Vec blue(0, 0, 255);
-const Vec green(0, 255, 0);
-const Vec purple(100, 0, 100);
-const Vec white(255, 255, 255);
+const Vec red(1, 0, 0);
+const Vec blue(0, 0, 1);
+const Vec green(0, 1, 0);
+const Vec purple(1, 0, 1);
+const Vec white(1, 1, 1);
 
 // Scene
 const Vec c(0, 0, 0);
 
 int main() {
-  Scene scene(light);
+  Scene scene;
 
   scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
   scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 990, blue));
-  std::cout << "last index " << scene.add_sphere(Sphere(Vec(0, 0, 1000), 940, purple)) << std::endl;
+  // This one should be invisible unless there is a bug (or a reflexion)
+  scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
 
   std::vector<float> image(W*H * 3, 0);
   for (int i = 0; i < H; i++) {
@@ -45,12 +46,19 @@ int main() {
       Vec dir = Vec(x, y, z).normalized();
       Ray r(origin, dir);
 
-      Vec color = scene.get_color(r);
+      Intersection intersect = scene.intersection(r);
+      if(intersect.valid()){
+        Vec vl = light.source() - intersect.position();
+        Vec color = intersect.material().color() * light.intensity() * std::max(0.0, intersect.normal().dot(vl.normalized())) / vl.norm_sq();
 
-      image[(i * W + j) * 3 + 0] = color.r();
-      image[(i * W + j) * 3 + 1] = color.g();
-      image[(i * W + j) * 3 + 2] = color.b();
-      
+        image[(i * W + j) * 3 + 0] = color.r();
+        image[(i * W + j) * 3 + 1] = color.g();
+        image[(i * W + j) * 3 + 2] = color.b();
+      } else {
+        image[(i * W + j) * 3 + 0] = 0;
+        image[(i * W + j) * 3 + 1] = 0;
+        image[(i * W + j) * 3 + 2] = 0;
+      }
     }
   }
 
@@ -58,9 +66,9 @@ int main() {
   std::vector<unsigned char> file_buffer(W*H * 3, 0);
   for (int i = 0; i < H; i++) {
     for (int j = 0; j < W; j++) {
-      file_buffer[(i * W + j) * 3 + 0] = std::max(0, std::min(255, (int) ceil(image[(i * W + j) * 3 + 0])));
-      file_buffer[(i * W + j) * 3 + 1] = std::max(0, std::min(255, (int) ceil(image[(i * W + j) * 3 + 1])));
-      file_buffer[(i * W + j) * 3 + 2] = std::max(0, std::min(255, (int) ceil(image[(i * W + j) * 3 + 2])));
+      file_buffer[(i * W + j) * 3 + 0] = std::max(0, std::min(255, (int) ceil(pow(image[(i * W + j) * 3 + 0], 0.45))));
+      file_buffer[(i * W + j) * 3 + 1] = std::max(0, std::min(255, (int) ceil(pow(image[(i * W + j) * 3 + 1], 0.45))));
+      file_buffer[(i * W + j) * 3 + 2] = std::max(0, std::min(255, (int) ceil(pow(image[(i * W + j) * 3 + 2], 0.45))));
     }
   }
 

@@ -5,17 +5,17 @@
 #include "Ray.hpp"
 #include "Sphere.hpp"
 #include "Light.hpp"
+#include "Intersection.hpp"
 
 class Scene {
 
   private:
-    Light m_light;
     std::vector<Sphere const*> m_spheres;
 
   public:
-    Scene(Light light):
-      m_light(light), m_spheres() {};
-    Vec get_color(Ray const& ray) const;
+    Scene():
+      m_spheres() {};
+    Intersection intersection(Ray const& ray) const;
 
     // add a sphere to the scene with a reference
     int add_sphere(Sphere const& s);
