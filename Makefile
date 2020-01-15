@@ -15,11 +15,14 @@ run: main
 main: $(OBJ)
 	$(CPP) $(LFLAGS) $^ -o $@
 
-build/%.o: src/%.cpp src/%.hpp
+build/%.o: src/%.cpp src/%.hpp build/
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 tags: $(SRC)
 	ctags --extras=rq $(SRC)
+
+build/:
+	mkdir -p build
 
 clean:
 	rm -rf build

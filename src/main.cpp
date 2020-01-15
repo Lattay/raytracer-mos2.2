@@ -32,7 +32,7 @@ int main() {
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
-  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 980, blue));
+  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 990, blue));
   // This one should be invisible unless there is a bug (or a reflexion)
   scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
 
@@ -48,18 +48,11 @@ int main() {
       Vec dir = Vec(x, y, z).normalized();
       Ray r(origin, dir);
 
-      Intersection intersect = scene.intersection(r);
-      if(intersect.valid()){
-        Vec color = scene.get_color(intersect, light);
+      Vec color = scene.get_color(r, light);
 
-        image[(i * W + j) * 3 + 0] = color.r();
-        image[(i * W + j) * 3 + 1] = color.g();
-        image[(i * W + j) * 3 + 2] = color.b();
-      } else {
-        image[(i * W + j) * 3 + 0] = 0;
-        image[(i * W + j) * 3 + 1] = 0;
-        image[(i * W + j) * 3 + 2] = 0;
-      }
+      image[(i * W + j) * 3 + 0] = color.r();
+      image[(i * W + j) * 3 + 1] = color.g();
+      image[(i * W + j) * 3 + 2] = color.b();
     }
   }
 

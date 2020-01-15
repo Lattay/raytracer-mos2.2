@@ -12,7 +12,7 @@ class Ray{
 
   public:
     Ray(Vec origin, Vec dir):
-       m_origin(origin), m_direction(dir){};
+       m_origin(origin), m_direction(dir.normalized()){};
 
     Vec direction() const {return m_direction;};
     Vec origin() const {return m_origin;};

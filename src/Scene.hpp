@@ -16,7 +16,8 @@ class Scene {
     Scene():
       m_spheres() {};
     Intersection intersection(Ray const& ray) const;
-    Vec get_color(Intersection const& inter, Light const& source) const;
+    Vec get_color(Ray const& ray, Light const& sourcr) const;
+    Vec get_color(Ray const& ray, Light const& source, int k) const;
 
     // add a sphere to the scene with a reference
     int add_sphere(Sphere const& s);
