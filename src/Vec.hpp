@@ -1,6 +1,7 @@
 #ifndef VEC_HPP
 #define VEC_HPP
 #include <cmath>
+#include <iostream>
 
 class Vec {
   private:
@@ -17,7 +18,7 @@ class Vec {
     double b() const{return m_z;}
 
     Vec():
-      m_x(), m_y(), m_z() {}
+      m_x(0.0), m_y(0.0), m_z(0.0) {}
     Vec(double x, double y, double z):
       m_x(x),m_y(y),m_z(z) {}
 
@@ -35,5 +36,6 @@ Vec operator/(Vec const& a, double f);
 Vec operator+(Vec const& a, Vec const& b);
 Vec operator-(Vec const& a, Vec const& b);
 Vec operator-(Vec const& a);
+std::ostream& operator<<(std::ostream& a, Vec const& b);
 
 #endif

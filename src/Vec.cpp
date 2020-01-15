@@ -25,6 +25,11 @@ Vec operator-(Vec const& a){
   return Vec(-a.x(), -a.y(), -a.z());
 }
 
+std::ostream& operator<<(std::ostream& a, Vec const& b){
+  a << "(" << b.x() << ", " << b.y() << ", " << b.z() << ")";
+  return a;
+}
+
 double Vec::dot(Vec const& b) const{
   return m_x * b.x() + m_y * b.y() + m_z * b.z();
 }

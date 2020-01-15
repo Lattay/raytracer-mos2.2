@@ -1,5 +1,12 @@
 CPP=g++
-CFLAGS=-Wall -Wextra -Wpedantic --std=c++11
+DEBUG=0
+
+ifeq ($(DEBUG),0)
+	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11
+else
+	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -g
+endif
+
 LFLAFS=
 SRC=$(wildcard src/*.cpp)
 OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
@@ -11,6 +18,9 @@ all: main
 run: main
 	./main
 	xdg-open ./image.png &
+
+debug: main
+	gdb ./main
 
 main: $(OBJ)
 	$(CPP) $(LFLAGS) $^ -o $@

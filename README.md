@@ -26,3 +26,11 @@ The code for a given step correspond to a git tag.
 ## Step 4: Add shadows
 
 ![step 4 render: previous scene with an additional litle ball projecting its shadow on the main one](./result/step4.png)
+
+## Step 5: Add mirror like surfaces
+
+![step 5 render: previous scene but the main ball is a spheric mirror](./result/step5.png)
+
+## Step 6: Add transparent material
+
+![step 6 render: previous scene but the main ball is a spheric mirror](./result/step5.png)

@@ -14,12 +14,14 @@ const Vec origin(0, 0, 55);
 const Light light(Vec(-10, 20, 40), 1e8);
 
 // colors
-const Vec black(0, 0, 0);
-const Vec red(1, 0, 0);
-const Vec blue(0, 0, 1);
-const Vec green(0, 1, 0);
-const Vec purple(1, 0, 1);
-const Vec white(1, 1, 1);
+const Material mirror(MIRROR);
+const Material glass(TRANSPARENT);
+const Material black(Vec(0, 0, 0));
+const Material red(Vec(1, 0, 0));
+const Material blue(Vec(0, 0, 1));
+const Material green(Vec(0, 1, 0));
+const Material purple(Vec(1, 0, 1));
+const Material white(Vec(1, 1, 1));
 
 // Scene
 const Vec c(0, 0, 0);
@@ -27,7 +29,8 @@ const Vec c(0, 0, 0);
 int main() {
   Scene scene;
 
-  scene.add_new_sphere(Sphere(c, 10, white));
+  // scene.add_new_sphere(Sphere(c, 10, white));
+  scene.add_new_sphere(Sphere(c, 10, glass));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 2, white));
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
