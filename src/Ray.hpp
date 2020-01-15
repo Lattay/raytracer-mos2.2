@@ -20,7 +20,7 @@ class Ray{
     Vec origin() const {return m_origin;};
 
     void set_direction(Vec dir){
-      m_direction = dir;
+      m_direction = dir.normalized();
     }
 
     void set_origin(Vec origin){

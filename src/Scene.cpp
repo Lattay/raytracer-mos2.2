@@ -25,10 +25,10 @@ Intersection Scene::intersection(Ray const& ray) const{
 }
 
 Vec Scene::get_color(Ray const& ray, Light const& source) const{
-  return get_color(ray, source, 5);
+  return get_color(ray, source, 5, false);
 }
 
-Vec Scene::get_color(Ray const& ray, Light const& source, int k) const{
+Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) const{
   const double epsilon = 0.001;
 
   Intersection inter = intersection(ray);
@@ -45,48 +45,40 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k) const{
       Vec const& n = inter.normal();
       Ray new_ray(inter.position() + epsilon * n, ray.direction() - 2.0 * n.dot(ray.direction()) * n);
 
-      return get_color(new_ray, source, k - 1);
+      return get_color(new_ray, source, k - 1, false);
     }
   } else if(inter.material().transparent() && k >= 0){
     if(k < 0){
       return black;
     } else {
-      Vec n = inter.normal();
-      Vec i = ray.direction();
-      // Vec t = (i + n).normalized();
 
-      double n2_n1 = inter.material().index();
+      bool changing = true;
+
+      Vec n = (inside ? -1 : 1) * inter.normal();
+      Vec i = ray.direction();
+
       double i_dot_n = i.dot(n);
-      double cos2_theta = 1 - 1.0/(n2_n1 * n2_n1) * (1 - i_dot_n*i_dot_n);
+
+      Vec sin_theta1_t = i - i_dot_n * n;
+
+      double sin2_theta1 = sin_theta1_t.norm_sq();
+
+      double n1_n2 = inside ?inter.material().index() : 1.0/inter.material().index();
+
+      double cos2_theta2 = 1 - n1_n2*n1_n2 * sin2_theta1;
 
       Ray new_ray;
-      if(cos2_theta > 0){
+
+      if(cos2_theta2 > 0){
         // transmis
-        Ray refracted_ray = Ray(inter.position() - epsilon * n,
-            - sqrt(cos2_theta) * n + (i - i_dot_n * n) / n2_n1);
-
-        Intersection inter2 = intersection(refracted_ray);
-
-        if(!inter2.valid()){
-          // error
-          return black;
-        } else {
-          i = refracted_ray.direction();
-          n = inter2.normal();
-
-          double i_dot_n = i.dot(n);
-          double cos2_theta = 1 - n2_n1 * n2_n1 * (1 - i_dot_n*i_dot_n);
-
-          new_ray = Ray(inter2.position() - epsilon * n,
-              - sqrt(cos2_theta) * n + (i - i_dot_n * n) * n2_n1);
-        }
+        new_ray = Ray(inter.position() - epsilon * n, - sqrt(cos2_theta2) * n + n1_n2 * sin_theta1_t);
       } else {
         // reflechis
-        new_ray.set_origin(inter.position() + epsilon * n);
-        new_ray.set_direction(ray.direction() - 2.0 * n.dot(ray.direction()) * n);
+        changing = false;
+        new_ray = Ray(inter.position() + epsilon * n, i - 2.0 * i_dot_n * n);
       }
 
-    return get_color(new_ray, source, k - 1);
+      return get_color(new_ray, source, k - 1, changing ? !inside : inside);
     }
   } else {
     Vec vl = source.source() - inter.position();
