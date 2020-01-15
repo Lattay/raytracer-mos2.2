@@ -28,9 +28,11 @@ int main() {
   Scene scene;
 
   scene.add_new_sphere(Sphere(c, 10, white));
+  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 2, white));
+
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
-  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 990, blue));
+  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 980, blue));
   // This one should be invisible unless there is a bug (or a reflexion)
   scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
 
@@ -48,8 +50,7 @@ int main() {
 
       Intersection intersect = scene.intersection(r);
       if(intersect.valid()){
-        Vec vl = light.source() - intersect.position();
-        Vec color = intersect.material().color() * light.intensity() * std::max(0.0, intersect.normal().dot(vl.normalized())) / vl.norm_sq();
+        Vec color = scene.get_color(intersect, light);
 
         image[(i * W + j) * 3 + 0] = color.r();
         image[(i * W + j) * 3 + 1] = color.g();

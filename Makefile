@@ -10,7 +10,7 @@ all: main
 
 run: main
 	./main
-	xdg-open ./image.png
+	xdg-open ./image.png &
 
 main: $(OBJ)
 	$(CPP) $(LFLAGS) $^ -o $@
@@ -20,9 +20,6 @@ build/%.o: src/%.cpp src/%.hpp
 
 tags: $(SRC)
 	ctags --extras=rq $(SRC)
-
-build:
-	mkdir build
 
 clean:
 	rm -rf build
