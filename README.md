@@ -33,4 +33,4 @@ The code for a given step correspond to a git tag.
 
 ## Step 6: Add transparent material
 
-![step 6 render: previous scene but the main ball is a spheric mirror](./result/step5.png)
+![step 6 render: previous scene but the main ball is a spheric mirror](./result/step6.png)
