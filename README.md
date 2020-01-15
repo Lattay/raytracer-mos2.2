@@ -22,3 +22,7 @@ The code for a given step correspond to a git tag.
 
 "Step" 3.5: refactor code about material and intersection. Add a basic invert gamma function to reduce constrast.
 ![step 3.5 render: same as 3.5 with less constrast](./result/step3.5.png)
+
+## Step 4: Add shadows
+
+![step 4 render: previous scene with an additional litle ball projecting its shadow on the main one](./result/step4.png)
