@@ -2,12 +2,12 @@ CPP=g++
 DEBUG=0
 
 ifeq ($(DEBUG),0)
-	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11
+	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -fopenmp -O3
 else
-	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -g
+	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -fopenmp -g
 endif
 
-LFLAFS=
+LFLAGS=-lgomp
 SRC=$(wildcard src/*.cpp)
 OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 

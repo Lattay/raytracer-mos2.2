@@ -60,6 +60,8 @@ int main() {
   // scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
 
   std::vector<float> image(W*H * 3, 0);
+
+#pragma omp parallel for schedule(dynamic, H/8)
   for (int i = 0; i < H; i++) {
     for (int j = 0; j < W; j++) {
 
@@ -86,6 +88,7 @@ int main() {
 
   // Convert float intensity to uchar pixel value
   std::vector<unsigned char> file_buffer(W*H * 3, 0);
+#pragma omp parallel for schedule(dynamic, H/8)
   for (int i = 0; i < H; i++) {
     for (int j = 0; j < W; j++) {
       file_buffer[(i * W + j) * 3 + 0] = clamp(image[(i * W + j) * 3 + 0]);
