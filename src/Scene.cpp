@@ -1,7 +1,20 @@
 #include <iostream>
+#include <random>
 #include "Scene.hpp"
 
 const Vec black(0, 0, 0);
+
+std::default_random_engine generator;
+std::uniform_real_distribution<double> distribution(0,1);
+
+static double roll(){
+  return distribution(generator);
+}
+
+static double shlick(double n1, double n2, double cos_theta){
+  double r0 = (n1 - n2)/(n1 + n2);
+  return r0 * r0 + (1 + r0 * r0) * pow(1 - cos_theta, 5);
+}
 
 Intersection Scene::intersection(Ray const& ray) const{
 
@@ -63,13 +76,18 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
 
       double sin2_theta1 = sin_theta1_t.norm_sq();
 
-      double n1_n2 = inside ?inter.material().index() : 1.0/inter.material().index();
+      double n1_n2 = inside ? inter.material().index() : 1.0/inter.material().index();
 
       double cos2_theta2 = 1 - n1_n2*n1_n2 * sin2_theta1;
+      double cos_theta1 = sqrt(1 - sin2_theta1);
+      double reflexion_probability = shlick(
+          inside ? inter.material().index() : 1.0,
+          !inside ? inter.material().index() : 1.0,
+          cos_theta1);
 
       Ray new_ray;
 
-      if(cos2_theta2 > 0){
+      if(cos2_theta2 < 0 || roll() > reflexion_probability){
         // transmis
         new_ray = Ray(inter.position() - epsilon * n, - sqrt(cos2_theta2) * n + n1_n2 * sin_theta1_t);
       } else {
