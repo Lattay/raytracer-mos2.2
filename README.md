@@ -36,4 +36,4 @@ The code for a given step correspond to a git tag.
 ![step 6 render: previous scene but the main ball is made of glass](./result/step6.png)
 
 "Step" 6.5: added stocastic raytracing for partial reflexions at transparent interfaces.
-![step 6.5 render: two big balls side by side, made of glass and water, one little mirror ball](./result/step6.5².png)
+![step 6.5 render: two big balls side by side, made of glass and water, one little mirror ball](./result/step6.5.png)
