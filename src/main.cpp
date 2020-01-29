@@ -1,35 +1,5 @@
 #include "main.hpp" 
  
-const double pi = 3.141592654;
-
-const int ray_number = 20;
-
-// Camera
-const int W = 512;
-const int H = 512;
-
-const double fov = pi/3.0;
-
-const Vec origin(0, 0, 55);
-
-// Light source
-const Light light(Vec(-10, 20, 40), 5e8);
-
-// colors
-const Transparent glass(1.5);
-const Transparent water(1.2);
-const Diffuse black(Vec(0, 0, 0));
-const Diffuse red(Vec(1, 0, 0));
-const Diffuse blue(Vec(0, 0, 1));
-const Diffuse green(Vec(0, 1, 0));
-const Diffuse yellow(Vec(1, 1, 0));
-const Diffuse purple(Vec(1, 0, 1));
-const Diffuse white(Vec(1, 1, 1));
-const Reflective mirror(0.9);
-
-// Scene
-const Vec c(0, 0, 0);
-
 static int clamp(double d){
   return std::max(0, std::min(255, (int) ceil(d)));
 }
@@ -49,9 +19,9 @@ int main() {
   Scene scene;
 
   // scene.add_new_sphere(Sphere(c, 10, white));
-  scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, water));
+  scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
   scene.add_new_sphere(Sphere(c + Vec(15, 0, 0), 10, glass));
-  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, mirror));
+  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
@@ -70,14 +40,17 @@ int main() {
 
       double x, y, z;
       x = j - W/2.0 + 0.5;
-      y = - i + H/2 + 0.5;
+      y = - i + H/2.0 + 0.5;
       z = -W/(2*tan(fov/2.0));
-
-      Vec dir = Vec(x, y, z).normalized();
-      Ray r(origin, dir);
 
       Vec color(0, 0, 0);
       for(int i = 0; i < ray_number; i++){
+
+        // Randomized direction to achieve anti-aliasing
+        Vec2 v = box_muller(0.5);
+        Vec dir = Vec(x + v.x, y + v.y, z).normalized();
+        Ray r(origin, dir);
+
         color = color + vgamma(scene.get_color(r, light));
       }
 
