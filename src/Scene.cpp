@@ -1,16 +1,11 @@
 #include <iostream>
-#include <random>
-#include <omp.h>
 #include "Scene.hpp"
+#include "random_tools.hpp"
+
+// 1/(2pi)
+#define ALPHA 0.159154
 
 const Vec black(0, 0, 0);
-
-static std::default_random_engine generator[4];
-static std::uniform_real_distribution<double> distribution(0,1);
-
-static double roll(){
-  return distribution(generator[omp_get_thread_num()]);
-}
 
 static double shlick(double n1, double n2, double cos_theta){
   double r0 = (n1 - n2)/(n1 + n2);
@@ -111,18 +106,23 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
 
       double d2 = (inter.position() - source.source()).norm_sq();
 
+      bool shadowed = false;
       for(long unsigned int i = 0; i < m_spheres.size(); ++i){
         Sphere const& s = *m_spheres[i];
         Intersection i_light = s.intersection(r_light);
         if(i_light.valid()){
-          if(d2 > (i_light.position() - inter.position()).norm_sq())
-            return black;
+          if(d2 > (i_light.position() - inter.position()).norm_sq()){
+            shadowed = true;
+            break;
+          }
         }
       }
-      direct = inter.material().color() * source.intensity() * std::max(0.0, inter.normal().dot(vl.normalized())) / vl.norm_sq();
+      if(!shadowed){
+        direct = inter.material().color() * source.intensity() * std::max(0.0, inter.normal().dot(vl.normalized())) / vl.norm_sq();
+      }
 
     }
-    return direct + indirect;
+    return direct + ALPHA * indirect;
   }
 }
 
