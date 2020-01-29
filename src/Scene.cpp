@@ -2,8 +2,9 @@
 #include "Scene.hpp"
 #include "random_tools.hpp"
 
-// 1/(2pi)
-#define ALPHA 0.159154
+// 1/(2pi) = 0.159154
+// 1/pi = 0.318310
+#define ALPHA 0.318310
 
 const Vec black(0, 0, 0);
 
