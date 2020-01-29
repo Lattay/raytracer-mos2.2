@@ -2,8 +2,8 @@
 #include <random>
 #include "Material.hpp"
 
-std::default_random_engine generator[4];
-std::uniform_real_distribution<double> distribution(0,1);
+static std::default_random_engine generator[4];
+static std::uniform_real_distribution<double> distribution(0,1);
 
 const double pi = 3.14159265;
 

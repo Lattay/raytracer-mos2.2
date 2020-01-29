@@ -5,8 +5,8 @@
 
 const Vec black(0, 0, 0);
 
-std::default_random_engine generator[4];
-std::uniform_real_distribution<double> distribution(0,1);
+static std::default_random_engine generator[4];
+static std::uniform_real_distribution<double> distribution(0,1);
 
 static double roll(){
   return distribution(generator[omp_get_thread_num()]);
@@ -21,7 +21,7 @@ Intersection Scene::intersection(Ray const& ray) const{
 
   double min_sq_dist = 1e10;
   // Intersection empty_intersection = Intersection();
-  Intersection& final_intersect = (Intersection&) invalid_intersect;
+  Intersection final_intersect;
 
   for(long unsigned int i = 0; i < m_spheres.size(); ++i){
     Sphere const& s = *m_spheres[i];

@@ -9,7 +9,7 @@ class Intersection {
     bool m_valid;
     Vec m_position;
     Vec m_normal;
-    (const Material)& m_material;
+    Material const& m_material;
 
   public:
     Intersection():

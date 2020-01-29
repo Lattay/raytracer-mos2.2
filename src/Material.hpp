@@ -7,11 +7,11 @@ typedef enum { MIRROR, TRANSPARENT} SFX;
 class Material {
 
   public:
-    Vec color() const{return Vec(0, 0, 0);};
-    bool direct_lighting() const{return false;};
-    bool transparent() const{return false;};
-    double index() const{return 1.0;};
-    virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
+    virtual Vec color() const{return Vec(0, 0, 0);};
+    virtual bool direct_lighting() const{return false;};
+    virtual bool transparent() const{return false;};
+    virtual double index() const{return 1.0;};
+    virtual Vec reflex_dir(Vec const& source, Vec const& n) const = 0;
 };
 
 class Diffuse: public Material {
@@ -19,15 +19,15 @@ class Diffuse: public Material {
     Vec m_color;
   public:
     Diffuse(Vec color): m_color(color){};
-    bool direct_lighting() const{return true;};
-    Vec color() const{return m_color;};
-    Vec reflex_dir(Vec const& source, Vec const& n) const;
+    virtual bool direct_lighting() const{return true;};
+    virtual Vec color() const{return m_color;};
+    virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
 };
 
 class Reflective: public Material {
   public:
     Reflective(){};
-    Vec reflex_dir(Vec const& source, Vec const& n) const;
+    virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
 };
 
 class Transparent: public Material {
@@ -35,9 +35,9 @@ class Transparent: public Material {
     double m_index;
   public:
     Transparent(double index): m_index(index) {};
-    double index() const{return m_index;};
-    bool transparent() const{return true;};
-    Vec reflex_dir(Vec const& source, Vec const& n) const;
+    virtual double index() const{return m_index;};
+    virtual bool transparent() const{return true;};
+    virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
 };
 
 const Diffuse white_emit(Vec(1, 1, 1));
