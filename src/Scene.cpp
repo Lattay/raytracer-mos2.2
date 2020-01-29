@@ -1,14 +1,15 @@
 #include <iostream>
 #include <random>
+#include <omp.h>
 #include "Scene.hpp"
 
 const Vec black(0, 0, 0);
 
-std::default_random_engine generator;
+std::default_random_engine generator[4];
 std::uniform_real_distribution<double> distribution(0,1);
 
 static double roll(){
-  return distribution(generator);
+  return distribution(generator[omp_get_thread_num()]);
 }
 
 static double shlick(double n1, double n2, double cos_theta){
@@ -20,7 +21,7 @@ Intersection Scene::intersection(Ray const& ray) const{
 
   double min_sq_dist = 1e10;
   // Intersection empty_intersection = Intersection();
-  Intersection final_intersect;
+  Intersection& final_intersect = (Intersection&) invalid_intersect;
 
   for(long unsigned int i = 0; i < m_spheres.size(); ++i){
     Sphere const& s = *m_spheres[i];
@@ -51,16 +52,9 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
   }
 
 
-  if(inter.material().mirror()){
-    if(k < 0){
-      return black;
-    } else {
-      Vec const& n = inter.normal();
-      Ray new_ray(inter.position() + epsilon * n, ray.direction() - 2.0 * n.dot(ray.direction()) * n);
-
-      return get_color(new_ray, source, k - 1, false);
-    }
-  } else if(inter.material().transparent() && k >= 0){
+  if(inter.material().transparent()){
+    // purely transparent/refractive material
+    
     if(k < 0){
       return black;
     } else {
@@ -99,21 +93,38 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       return get_color(new_ray, source, k - 1, changing ? !inside : inside);
     }
   } else {
-    Vec vl = source.source() - inter.position();
 
-    Ray r_light = Ray(inter.position() + epsilon * inter.normal(), vl.normalized());
+    Vec indirect(0, 0, 0), direct(0, 0, 0);
 
-    double d2 = (inter.position() - source.source()).norm_sq();
+    if(k < 0){
+      indirect = black;
+    } else {
+      Vec const& n = inter.normal();
+      Ray new_ray(inter.position() + epsilon * n, inter.material().reflex_dir(ray.direction(), n));
 
-    for(long unsigned int i = 0; i < m_spheres.size(); ++i){
-      Sphere const& s = *m_spheres[i];
-      Intersection i_light = s.intersection(r_light);
-      if(i_light.valid()){
-        if(d2 > (i_light.position() - inter.position()).norm_sq())
-          return black;
-      }
+      indirect = get_color(new_ray, source, k - 1, false);
     }
-    return inter.material().color() * source.intensity() * std::max(0.0, inter.normal().dot(vl.normalized())) / vl.norm_sq();
+
+    if(inter.material().direct_lighting()){
+      // Diffusive material have direct lighting
+      Vec vl = source.source() - inter.position();
+
+      Ray r_light = Ray(inter.position() + epsilon * inter.normal(), vl.normalized());
+
+      double d2 = (inter.position() - source.source()).norm_sq();
+
+      for(long unsigned int i = 0; i < m_spheres.size(); ++i){
+        Sphere const& s = *m_spheres[i];
+        Intersection i_light = s.intersection(r_light);
+        if(i_light.valid()){
+          if(d2 > (i_light.position() - inter.position()).norm_sq())
+            return black;
+        }
+      }
+      direct = inter.material().color() * source.intensity() * std::max(0.0, inter.normal().dot(vl.normalized())) / vl.norm_sq();
+
+    }
+    return direct + indirect;
   }
 }
 

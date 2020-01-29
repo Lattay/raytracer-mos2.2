@@ -9,17 +9,19 @@ class Intersection {
     bool m_valid;
     Vec m_position;
     Vec m_normal;
-    Material m_material;
+    (const Material)& m_material;
 
   public:
     Intersection():
-      m_valid(false), m_position(), m_normal(), m_material() {};
-    Intersection(Vec pos, Vec norm, Material mat):
+      m_valid(false), m_position(), m_normal(), m_material(white_emit) {};
+    Intersection(Vec pos, Vec norm, Material const& mat):
       m_valid(true), m_position(pos), m_normal(norm.normalized()), m_material(mat) {};
 
     bool valid() const{return m_valid;};
     Vec position() const{return m_position;};
     Vec normal() const{return m_normal;};
-    Material material() const{return m_material;};
+    Material const& material() const{return m_material;};
 };
+
+const Intersection invalid_intersect();
 #endif

@@ -5,30 +5,41 @@
 typedef enum { MIRROR, TRANSPARENT} SFX;
 
 class Material {
-  private:
-    Vec m_color;
-    bool m_mirror;
-    bool m_transparent;
-    double m_index;
 
   public:
-    Material(): m_color(Vec(1, 1, 1)), m_mirror(false), m_transparent(false) {};
-    Material(Vec color):
-      m_color(color), m_mirror(false), m_transparent(false) {};
-    Material(SFX effect):
-      m_color(Vec(1, 1, 1)), m_mirror(effect == MIRROR),
-      m_transparent(effect == TRANSPARENT), m_index(1.5) {};
-    Material(SFX effect, double index):
-      m_color(Vec(1, 1, 1)), m_mirror(effect == MIRROR),
-      m_transparent(effect == TRANSPARENT), m_index(index) {};
-    Material(Vec color, SFX effect, double index):
-      m_color(color), m_mirror(effect == MIRROR),
-      m_transparent(effect == TRANSPARENT), m_index(index) {};
-    Vec color() const{return m_color;};
-    bool mirror() const{return m_mirror;};
-    bool transparent() const{return m_transparent;};
-    double index() const{return m_index;};
+    Vec color() const{return Vec(0, 0, 0);};
+    bool direct_lighting() const{return false;};
+    bool transparent() const{return false;};
+    double index() const{return 1.0;};
+    virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
 };
 
-const Material white_emit = Material();
+class Diffuse: public Material {
+  private:
+    Vec m_color;
+  public:
+    Diffuse(Vec color): m_color(color){};
+    bool direct_lighting() const{return true;};
+    Vec color() const{return m_color;};
+    Vec reflex_dir(Vec const& source, Vec const& n) const;
+};
+
+class Reflective: public Material {
+  public:
+    Reflective(){};
+    Vec reflex_dir(Vec const& source, Vec const& n) const;
+};
+
+class Transparent: public Material {
+  private:
+    double m_index;
+  public:
+    Transparent(double index): m_index(index) {};
+    double index() const{return m_index;};
+    bool transparent() const{return true;};
+    Vec reflex_dir(Vec const& source, Vec const& n) const;
+};
+
+const Diffuse white_emit(Vec(1, 1, 1));
+
 #endif

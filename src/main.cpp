@@ -16,16 +16,16 @@ const Vec origin(0, 0, 55);
 const Light light(Vec(-10, 20, 40), 5e8);
 
 // colors
-const Material mirror(MIRROR);
-const Material glass(TRANSPARENT);
-const Material water(TRANSPARENT, 1.2);
-const Material black(Vec(0, 0, 0));
-const Material red(Vec(1, 0, 0));
-const Material blue(Vec(0, 0, 1));
-const Material green(Vec(0, 1, 0));
-const Material yellow(Vec(1, 1, 0));
-const Material purple(Vec(1, 0, 1));
-const Material white(Vec(1, 1, 1));
+// const Reflective mirror();
+const Transparent glass(1.5);
+const Transparent water(1.2);
+const Diffuse black(Vec(0, 0, 0));
+const Diffuse red(Vec(1, 0, 0));
+const Diffuse blue(Vec(0, 0, 1));
+const Diffuse green(Vec(0, 1, 0));
+const Diffuse yellow(Vec(1, 1, 0));
+const Diffuse purple(Vec(1, 0, 1));
+const Diffuse white(Vec(1, 1, 1));
 
 // Scene
 const Vec c(0, 0, 0);
@@ -48,13 +48,13 @@ int main() {
   // scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, water));
   scene.add_new_sphere(Sphere(c + Vec(15, 0, 0), 10, glass));
-  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, mirror));
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
   scene.add_new_sphere(Sphere(Vec(-1000, 0, 0), 940, yellow));
   scene.add_new_sphere(Sphere(Vec(1000, 0, 0), 940, yellow));
   scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 985, blue));
+  // scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, mirror));
   
   // This one should be invisible unless there is a bug (or a reflexion)
   // scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
