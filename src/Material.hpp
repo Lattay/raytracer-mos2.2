@@ -25,8 +25,10 @@ class Diffuse: public Material {
 };
 
 class Reflective: public Material {
+  private:
+    double m_loss;
   public:
-    Reflective(){};
+    Reflective(double loss): m_loss(loss){};
     virtual Vec reflex_dir(Vec const& source, Vec const& n) const;
 };
 

@@ -2,6 +2,7 @@
 #define MAIN_HPP
 #include <vector>
 #include <iostream>
+#include <omp.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../vendor/stb_image_write.h"

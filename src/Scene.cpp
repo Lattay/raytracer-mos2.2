@@ -94,11 +94,9 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
     }
   } else {
 
-    Vec indirect(0, 0, 0), direct(0, 0, 0);
+    Vec indirect(black), direct(black);
 
-    if(k < 0){
-      indirect = black;
-    } else {
+    if(k >= 0){
       Vec const& n = inter.normal();
       Ray new_ray(inter.position() + epsilon * n, inter.material().reflex_dir(ray.direction(), n));
 
