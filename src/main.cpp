@@ -23,19 +23,19 @@ int main() {
   scene.add_new_sphere(Sphere(c + Vec(15, 0, 0), 10, glass));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
 
-  scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, red));
+  scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, white));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
   scene.add_new_sphere(Sphere(Vec(-1000, 0, 0), 940, yellow));
   scene.add_new_sphere(Sphere(Vec(1000, 0, 0), 940, yellow));
-  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 985, blue));
+  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 985, light_blue));
   
   // This one should be invisible unless there is a bug (or a reflexion)
   // scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
 
   std::vector<float> image(W*H * 3, 0);
 
-#pragma omp parallel for schedule(dynamic, H/8)
   for (int i = 0; i < H; i++) {
+#pragma omp parallel for schedule(dynamic, H/8)
     for (int j = 0; j < W; j++) {
 
       double x, y, z;
@@ -59,6 +59,9 @@ int main() {
       image[(i * W + j) * 3 + 0] = color.r();
       image[(i * W + j) * 3 + 1] = color.g();
       image[(i * W + j) * 3 + 2] = color.b();
+    }
+    if(i%64 == 0){
+      std::cout << "Segment " << i/64 << " done.\n";
     }
   }
 

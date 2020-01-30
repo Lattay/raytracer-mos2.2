@@ -30,13 +30,14 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Light light(Vec(-10, 20, 40), 5e8);
+const Light light(Vec(-10, 20, 40), 3e8);
 
 // colors
 const Transparent glass(1.5);
 const Transparent water(1.2);
 const Diffuse black(Vec(0, 0, 0));
 const Diffuse red(Vec(1, 0, 0));
+const Diffuse light_blue(Vec(0.5, 0.5, 1));
 const Diffuse blue(Vec(0, 0, 1));
 const Diffuse green(Vec(0, 1, 0));
 const Diffuse yellow(Vec(1, 1, 0));

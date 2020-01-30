@@ -5,8 +5,9 @@ typedef struct {Vec x; Vec y; Vec z;} Base;
 
 const double pi = 3.14159265;
 
-Vec Reflective::reflex_dir(Vec const& source, Vec const& n) const{
-  return source - 2.0 * n.dot(source) * n;
+Sample Reflective::reflex_dir(Vec const& source, Vec const& n) const{
+  Sample s{source - 2.0 * n.dot(source) * n, 1.0};
+  return s;
 }
 
 Base ortho_prod(Vec const& v){
@@ -45,7 +46,7 @@ Base ortho_zer_max(Vec v){
   return b;
 }
 
-Vec Diffuse::reflex_dir(Vec const& source, Vec const& n) const{
+Sample Diffuse::reflex_dir(Vec const& source, Vec const& n) const{
   double x, y, z;
 
   double r1 = roll();
@@ -55,12 +56,13 @@ Vec Diffuse::reflex_dir(Vec const& source, Vec const& n) const{
   y = cos(2 * pi * r1) * sqrt(1 - r2);
   z = sqrt(r2);
 
-  Base b = ortho_zer_max(n);
+  Base b = ortho_prod(n);
   Vec v1(b.x), v2(b.y), v3(b.z);
-
-  return x * v1 + y * v2 + z * v3;
+  Sample s{x * v1 + y * v2 + z * v3, z};
+  return s;
 }
 
-Vec Transparent::reflex_dir(Vec const& source, Vec const& n) const{
-  return source;
+Sample Transparent::reflex_dir(Vec const& source, Vec const& n) const{
+  Sample s{source, 1.0};
+  return s;
 }

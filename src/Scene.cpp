@@ -4,7 +4,7 @@
 
 // 1/(2pi) = 0.159154
 // 1/pi = 0.318310
-#define ALPHA 0.318310
+#define ALPHA 0.159154
 
 const Vec black(0, 0, 0);
 
@@ -94,9 +94,10 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
 
     if(k >= 0){
       Vec const& n = inter.normal();
-      Ray new_ray(inter.position() + epsilon * n, inter.material().reflex_dir(ray.direction(), n));
+      Sample s = inter.material().reflex_dir(ray.direction(), n);
+      Ray new_ray(inter.position() + epsilon * n, s.dir);
 
-      indirect = get_color(new_ray, source, k - 1, false);
+      indirect = get_color(new_ray, source, k - 1, false) / s.proba;
     }
 
     if(inter.material().direct_lighting()){
