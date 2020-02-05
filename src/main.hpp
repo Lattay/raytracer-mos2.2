@@ -17,8 +17,6 @@
 #include "Light.hpp"
 #include "random_tools.hpp"
 
-const double pi = 3.141592654;
-
 const int ray_number = 20;
 
 // Camera
@@ -30,7 +28,7 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Light light(Vec(-10, 20, 40), 3e8);
+const Light light(Vec(-10, 20, 40), 5e8, 5);
 
 // colors
 const Transparent glass(1.5);
