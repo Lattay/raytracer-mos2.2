@@ -1,10 +1,11 @@
 CPP=g++
 DEBUG=0
-
-ifeq ($(DEBUG),0)
-	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -fopenmp -O3
-else
-	CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -fopenmp -g
+CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -O3
+ifeq ($(DEBUG),1)
+	CFLAGS+=-g
+endif
+ifeq ($(NOOMP),0)
+	CFLAGS+=-fopenmp
 endif
 
 LFLAGS=-lgomp
