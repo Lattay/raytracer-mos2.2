@@ -1,9 +1,7 @@
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
 #include "Vec.hpp"
-
-typedef enum { MIRROR, TRANSPARENT} SFX;
-typedef struct { Vec dir; double proba; } Sample;
+#include "random_tools.hpp"
 
 class Material {
 
