@@ -37,3 +37,7 @@ The code for a given step correspond to a git tag.
 
 "Step" 6.5: added stocastic raytracing for partial reflexions at transparent interfaces.
 ![step 6.5 render: two big balls side by side, made of glass and water, one little mirror ball](./result/step6.5.png)
+
+## Step 7: Add indirect lighting and extended light sources
+
+![step 7 render: left ball s a mirror, right is diffuse, shadows are smooth and not fully black](./result/step7.png)
