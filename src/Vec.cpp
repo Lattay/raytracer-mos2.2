@@ -9,6 +9,10 @@ Vec operator*(double f, Vec const& a){
   return Vec(a.x()*f, a.y()*f, a.z()*f);
 }
 
+Vec operator*(Vec const& a, Vec const& b){
+  return Vec(a.x()*b.x(), a.y()*b.y(), a.z()*b.z());
+}
+
 Vec operator/(Vec const& a, double f){
   return Vec(a.x()/f, a.y()/f, a.z()/f);
 }

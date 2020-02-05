@@ -30,8 +30,11 @@ class Vec {
     Vec normalized() const;
 };
 
+typedef struct {Vec x; Vec y; Vec z;} Base;
+
 Vec operator*(Vec const& v, double f);
 Vec operator*(double f, Vec const& v);
+Vec operator*(Vec const& a, Vec const& b);
 Vec operator/(Vec const& a, double f);
 Vec operator+(Vec const& a, Vec const& b);
 Vec operator-(Vec const& a, Vec const& b);
