@@ -60,9 +60,6 @@ int main() {
       image[(i * W + j) * 3 + 1] = color.g();
       image[(i * W + j) * 3 + 2] = color.b();
     }
-    if(i%64 == 0){
-      std::cout << "Segment " << i/64 << " done.\n";
-    }
   }
 
   // Convert float intensity to uchar pixel value

@@ -17,7 +17,7 @@ class Diffuse: public Material {
   private:
     Vec m_color;
   public:
-    Diffuse(Vec color): m_color(color){};
+    Diffuse(Vec color): m_color(0.9 * color){};
     virtual bool direct_lighting() const{return true;};
     virtual Vec color() const{return m_color;};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
@@ -29,6 +29,7 @@ class Reflective: public Material {
   public:
     Reflective(double loss): m_loss(loss){};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
+    virtual Vec color() const{return {1, 1, 1};};
 };
 
 class Transparent: public Material {

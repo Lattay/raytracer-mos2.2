@@ -28,7 +28,7 @@ const double fov = pi/3.0;
 const Vec origin(0, 0, 55);
 
 // Light source
-const Light light(Vec(-10, 20, 40), 5e8, 5);
+const Light light(Vec(-10, 20, 40), 5e8, 10);
 
 // colors
 const Transparent glass(1.5);

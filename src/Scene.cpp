@@ -96,7 +96,7 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       Sample s = inter.material().reflex_dir(ray.direction(), n);
       Ray new_ray(inter.position() + epsilon * n, s.dir);
 
-      indirect = inter.material().color() * get_color(new_ray, source, k - 1, false) / s.proba;
+      indirect = inter.material().color() * get_color(new_ray, source, k - 1, false);
     }
 
     if(inter.material().direct_lighting()){
@@ -126,13 +126,11 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       if(!shadowed){
         double intensity = source.intensity()
           * std::max(0.0, inter.normal().dot(vl2))
-          * s.dir.normalized().dot(-vl2);
+          * std::max(0.0, s.dir.normalized().dot(-vl2));
         direct = inter.material().color() * intensity  / (pi * d2 * s.proba);
       }
-      direct = {1, 0, 0};
-
     }
-    return direct + ALPHA * indirect;
+    return direct + indirect;
   }
 }
 
