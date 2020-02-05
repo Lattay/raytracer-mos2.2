@@ -23,6 +23,8 @@ const int ray_number = 20;
 const int W = 512;
 const int H = 512;
 
+const double field_depth = 55;
+
 const double fov = pi/3.0;
 
 const Vec origin(0, 0, 55);

@@ -20,7 +20,7 @@ int main() {
 
   // scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
-  scene.add_new_sphere(Sphere(c + Vec(15, 0, 0), 10, light_blue));
+  scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, white));
@@ -48,13 +48,18 @@ int main() {
 
         // Randomized direction to achieve anti-aliasing
         Vec2 v = box_muller(0.5);
-        Vec dir = Vec(x + v.x, y + v.y, z).normalized();
-        Ray r(origin, dir);
+        Vec2 v2 = box_muller(0.5);
 
-        color = color + vgamma(scene.get_color(r, light));
+        Vec delta_c = Vec(v2.x, v2.y, 0);
+        Vec c_prim = origin + delta_c;
+
+        Vec dir = Vec(x + v.x, y + v.y, z).normalized()*field_depth - delta_c;
+        Ray r(c_prim, dir);
+
+        color = color + scene.get_color(r, light);
       }
 
-      color = color / (double) ray_number;
+      color = vgamma(color / (double) ray_number);
 
       image[(i * W + j) * 3 + 0] = color.r();
       image[(i * W + j) * 3 + 1] = color.g();
