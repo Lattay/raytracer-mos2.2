@@ -4,7 +4,7 @@
 
 // 1/(2pi) = 0.159154
 // 1/pi = 0.318310
-#define ALPHA 0.159154
+#define ALPHA 0.318310
 
 const Vec black(0, 0, 0);
 
@@ -46,7 +46,6 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
   if(!inter.valid()){
     return black;
   }
-
 
   if(inter.material().transparent()){
     // purely transparent/refractive material
@@ -97,16 +96,21 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       Sample s = inter.material().reflex_dir(ray.direction(), n);
       Ray new_ray(inter.position() + epsilon * n, s.dir);
 
-      indirect = get_color(new_ray, source, k - 1, false) / s.proba;
+      indirect = inter.material().color() * get_color(new_ray, source, k - 1, false) / s.proba;
     }
 
     if(inter.material().direct_lighting()){
       // Diffusive material have direct lighting
       Vec vl = source.source() - inter.position();
+      Sample s(random_cos(-vl));
+      Vec p_emit(source.source() + s.dir*source.radius());
 
-      Ray r_light = Ray(inter.position() + epsilon * inter.normal(), vl.normalized());
+      Vec vl2 = p_emit - inter.position();
 
-      double d2 = (inter.position() - source.source()).norm_sq();
+      double d2 = vl2.norm_sq();
+      vl2 = vl2.normalized();
+
+      Ray r_light = Ray(inter.position() + epsilon * inter.normal(), vl2);
 
       bool shadowed = false;
       for(long unsigned int i = 0; i < m_spheres.size(); ++i){
@@ -120,8 +124,12 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
         }
       }
       if(!shadowed){
-        direct = inter.material().color() * source.intensity() * std::max(0.0, inter.normal().dot(vl.normalized())) / vl.norm_sq();
+        double intensity = source.intensity()
+          * std::max(0.0, inter.normal().dot(vl2))
+          * s.dir.normalized().dot(-vl2);
+        direct = inter.material().color() * intensity  / (pi * d2 * s.proba);
       }
+      direct = {1, 0, 0};
 
     }
     return direct + ALPHA * indirect;
