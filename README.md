@@ -43,4 +43,5 @@ The code for a given step correspond to a git tag.
 ![step 7 render: left ball s a mirror, right is diffuse, shadows are smooth and not fully black](./result/step7.png)
 
 "Step" 7.5: added depht-of-field effect. A lot of noise appear, it decrease with more ray launched (seed [high resolution render](./result/highres_3.png)).
+
 ![step 7.5 render: right ball is blurry and very close, background is blurry](./result/step7.5.png)
