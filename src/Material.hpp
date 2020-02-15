@@ -1,5 +1,6 @@
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
+#include <vector>
 #include "Vec.hpp"
 #include "random_tools.hpp"
 
@@ -40,6 +41,20 @@ class Transparent: public Material {
     virtual double index() const{return m_index;};
     virtual bool transparent() const{return true;};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
+};
+
+class Texture {
+  private:
+    const char* m_filename;
+    std::vector<char> m_raw;
+
+  public:
+    Texture(const char* filename): m_filename(filename){
+      // load(); // FIXME: Enable texture loading when needed.
+    };
+
+    void load();
+    Diffuse get_diffuse(Vec const& i, Vec const& j, Vec const& k, Vec const& p) const;
 };
 
 const Diffuse white_emit(Vec(1, 1, 1));

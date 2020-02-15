@@ -5,8 +5,9 @@
 #include "Ray.hpp"
 #include "Material.hpp"
 #include "Intersection.hpp"
+#include "Object.hpp"
 
-class Sphere {
+class Sphere: public Object {
 
   private:
     Vec m_origin;
@@ -21,9 +22,10 @@ class Sphere {
 
     double r() const{return m_radius;};
     Vec origin() const{return m_origin;};
-    Material const& material() const{return m_material;};
-    bool intersect(Ray const& r) const;
-    Intersection intersection(Ray const& r) const;
+
+    virtual Material const& material() const{return m_material;};
+    // virtual bool intersect(Ray const& r) const;
+    virtual Intersection intersection(Ray const& r) const;
 };
 
 #endif

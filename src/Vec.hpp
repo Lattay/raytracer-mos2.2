@@ -2,6 +2,7 @@
 #define VEC_HPP
 #include <cmath>
 #include <iostream>
+#include <cassert>
 
 class Vec {
   private:
@@ -16,6 +17,16 @@ class Vec {
     double r() const{return m_x;}
     double g() const{return m_y;}
     double b() const{return m_z;}
+
+    double &operator[](int i){
+      assert(i > 2 || i < 0);
+      switch(i){
+        case 0: return m_x;
+        case 1: return m_y;
+        case 2: return m_z;
+        default: return m_x; // unreachable
+      }
+    }
 
     Vec():
       m_x(0.0), m_y(0.0), m_z(0.0) {}
