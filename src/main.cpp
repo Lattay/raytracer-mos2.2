@@ -20,14 +20,21 @@ int main() {
 
   // scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
-  scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
+  // scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
+  MeshBox* mesh = load_mesh("./misc/suzanne.obj", 10, c);
+  Vec box = mesh->box_size();
+  std::cout << "Box size " << box.x() << ", " << box.y() << ", " << box.z() << std::endl;
+
+  scene.add_mesh(mesh);
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, white));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
   scene.add_new_sphere(Sphere(Vec(-1000, 0, 0), 940, yellow));
   scene.add_new_sphere(Sphere(Vec(1000, 0, 0), 940, yellow));
   scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 985, blue));
+
+  std::cout << "Scene ready." << std::endl;
   
   // This one should be invisible unless there is a bug (or a reflexion)
   // scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));

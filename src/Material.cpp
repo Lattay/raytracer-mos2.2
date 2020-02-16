@@ -1,5 +1,6 @@
 #include "Material.hpp"
 #include "random_tools.hpp"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
 Sample Diffuse::reflex_dir(Vec const& source, Vec const& n) const{
   return random_cos(n);

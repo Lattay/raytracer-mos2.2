@@ -25,7 +25,7 @@ debug: main
 	gdb ./main
 
 main: $(OBJ)
-	$(CPP) $(LFLAGS) $^ -o $@
+	$(CPP) $(CFLAGS) $(LFLAGS) $^ -o $@
 
 build/%.o: src/%.cpp src/%.hpp | build/
 	$(CPP) $(CFLAGS) -c $< -o $@

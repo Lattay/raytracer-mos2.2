@@ -19,7 +19,7 @@ class Vec {
     double b() const{return m_z;}
 
     double &operator[](int i){
-      assert(i > 2 || i < 0);
+      assert(i < 3 && i >= 0);
       switch(i){
         case 0: return m_x;
         case 1: return m_y;

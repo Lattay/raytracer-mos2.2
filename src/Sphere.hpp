@@ -23,8 +23,6 @@ class Sphere: public Object {
     double r() const{return m_radius;};
     Vec origin() const{return m_origin;};
 
-    virtual Material const& material() const{return m_material;};
-    // virtual bool intersect(Ray const& r) const;
     virtual Intersection intersection(Ray const& r) const;
 };
 

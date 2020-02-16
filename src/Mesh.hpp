@@ -82,11 +82,11 @@ class Mesh {
     Texture const& get_texture(size_t i) const;
 };
 
-class MeshBox: public Object {
+class MeshBox final: public Object {
   protected:
     std::vector<size_t> m_indices;
     bool m_terminal;
-    Vec m_vmin, m_vmax, m_vmedian;
+    Vec m_vmin, m_vmax; //, m_vmedian;
     MeshBox const* m_top;
     MeshBox const* m_bottom;
     Mesh const* m_mesh;
@@ -95,8 +95,8 @@ class MeshBox: public Object {
     ~MeshBox();
     MeshBox(RawMesh const& mesh, std::vector<size_t> indices);
 
-    virtual Material const& material() const;
     virtual Intersection intersection(Ray const& r) const;
+    Vec box_size() const { return m_vmax - m_vmin; };
 };
 
 

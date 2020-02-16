@@ -19,9 +19,9 @@ Intersection Scene::intersection(Ray const& ray) const{
   // Intersection empty_intersection = Intersection();
   Intersection final_intersect;
 
-  for(long unsigned int i = 0; i < m_spheres.size(); ++i){
-    Sphere const& s = *m_spheres[i];
-    Intersection intersect = s.intersection(ray);
+  for(long unsigned int i = 0; i < m_objects.size(); ++i){
+    Object const& o = *m_objects[i];
+    Intersection intersect = o.intersection(ray);
     if(intersect.valid()){
       double d = (intersect.position() - ray.origin()).norm_sq();
       if(d < min_sq_dist){
@@ -113,9 +113,9 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       Ray r_light = Ray(inter.position() + epsilon * inter.normal(), vl2);
 
       bool shadowed = false;
-      for(long unsigned int i = 0; i < m_spheres.size(); ++i){
-        Sphere const& s = *m_spheres[i];
-        Intersection i_light = s.intersection(r_light);
+      for(long unsigned int i = 0; i < m_objects.size(); ++i){
+        Object const& o = *m_objects[i];
+        Intersection i_light = o.intersection(r_light);
         if(i_light.valid()){
           if(d2 > (i_light.position() - inter.position()).norm_sq()){
             shadowed = true;
@@ -135,11 +135,16 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
 }
 
 int Scene::add_sphere(Sphere const& s){
-  m_spheres.push_back(&s);
-  return m_spheres.size() - 1;
+  m_objects.push_back(&s);
+  return m_objects.size() - 1;
 }
 
 int Scene::add_new_sphere(Sphere s){
-  m_spheres.push_back(new Sphere(s));
-  return m_spheres.size() - 1;
+  m_objects.push_back(new Sphere(s));
+  return m_objects.size() - 1;
+}
+
+int Scene::add_mesh(MeshBox* mesh){
+  m_objects.push_back(mesh);
+  return m_objects.size() - 1;
 }
