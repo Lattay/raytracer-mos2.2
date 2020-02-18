@@ -6,7 +6,6 @@
 #include "Ray.hpp"
 #include "Intersection.hpp"
 #include "Material.hpp"
-#include <vector>
 
 class TriangleIndices {
   public:
@@ -19,25 +18,23 @@ class TriangleIndices {
       vtxi(vtxi), vtxj(vtxj), vtxk(vtxk), uvi(uvi), uvj(uvj), uvk(uvk), ni(ni), nj(nj), nk(nk) { };
 };
 
-class Triangle {
+typedef std::vector<size_t> Indices;
+
+class TriIntersection final: public Intersection {
   private:
-    Vec m_i, m_j, m_k;
+    bool m_valid;
+    Vec m_position;
+    Indices const* m_indices;
+
   public:
-    Triangle(Vec i, Vec j, Vec k):
-      m_i(i), m_j(j), m_k(k) {};
+    TriIntersection():
+      m_valid(false) {};
+    TriIntersection(Vec position, Indices const* indices):
+      m_valid(true), m_position(position), m_indices(indices) {};
 
-    Vec operator[](int i){
-      switch(i){
-        case 0: return m_i;
-        case 1: return m_j;
-        case 2: return m_k;
-      }
-    }
-    Vec const& i(){ return m_i; };
-    Vec const& j(){ return m_j; };
-    Vec const& k(){ return m_k; };
-
-    Intersection intersection(Ray const& r, Texture const& tex);
+    bool valid() const {return m_valid;};
+    Vec const& position() const{return m_position;};
+    Indices const& indices() const{return *m_indices;};
 };
 
 class RawMesh {
@@ -48,60 +45,46 @@ class RawMesh {
     std::vector<Vec> normals;
     std::vector<Vec> uvs; // Vector en 3D mais on n'utilise que 2 composantes
     std::vector<Vec> vertex_colors;
-    std::vector<Texture> m_textures;
+    std::vector<Texture> textures;
 
     RawMesh() {};
     RawMesh(const char* obj, double scaling, const Vec& offset);
 
     void read_OBJ(const char* obj);
     void add_texture(const char* filename); 
-    Triangle get_triangle(int index) const{
-      return Triangle(vertices[indices[index].ni],
-          vertices[indices[index].nj],
-          vertices[indices[index].nk]);
-    };
 };
 
-class Mesh {
-
-  private:
-    std::vector<TriangleIndices> m_indices;
-    std::vector<Vec> m_vertices;
-    std::vector<Vec> m_normals;
-    std::vector<Vec> m_uvs; // Vector en 3D mais on n'utilise que 2 composantes
-    std::vector<Vec> m_vertex_colors;
-
-    std::vector<Texture> m_textures;
-
-  public:
-    Mesh() {};
-    Mesh(RawMesh parent, std::vector<size_t> indices);
-
-    Intersection intersection(Ray const& r) const;
-
-    Texture const& get_texture(size_t i) const;
-};
-
-class MeshBox final: public Object {
+class MeshBox {
   protected:
-    std::vector<size_t> m_indices;
+    Indices m_indices;
     bool m_terminal;
-    Vec m_vmin, m_vmax; //, m_vmedian;
+    Vec m_vmin, m_vmax, m_center; //, m_vmedian;
     MeshBox const* m_top;
     MeshBox const* m_bottom;
-    Mesh const* m_mesh;
   public:
     MeshBox() {};
     ~MeshBox();
-    MeshBox(RawMesh const& mesh, std::vector<size_t> indices);
+    MeshBox(RawMesh const& mesh, Indices indices);
 
-    virtual Intersection intersection(Ray const& r) const;
+    TriIntersection intersection(Ray const& r) const;
     Vec box_size() const { return m_vmax - m_vmin; };
 };
 
+class Mesh final: public Object{
 
-MeshBox* load_mesh(const char* obj, double scaling, const Vec& offset);
-bool intersect_box(Ray r, Vec min, Vec max);
-bool intersect_rectangle(Ray r, Vec corner, Vec n, Vec t_x, Vec t_y);
+  private:
+    RawMesh* m_mesh;
+    MeshBox* m_box;
+
+  public:
+    Mesh() {};
+    Mesh(const char* obj, double scaling, const Vec& offset);
+    ~Mesh();
+
+
+    Texture const& get_texture(size_t i) const;
+    virtual Intersection intersection(Ray const& r) const;
+    Vec box_size() const{return m_box->box_size();};
+};
 
 #endif

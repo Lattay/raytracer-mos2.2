@@ -3,16 +3,57 @@
 #include <algorithm>
 #include <iostream>
 #include "Mesh.hpp"
+#include "Sphere.hpp"
 
-MeshBox* load_mesh(const char* obj, double scaling, const Vec& offset){
-  RawMesh mesh(obj, scaling, offset);
-  std::vector<size_t> indices(mesh.indices.size());
+static inline double abs(double x){ return (x > 0.0) ? x : -x; }
 
-  for(size_t i = 0; i < mesh.indices.size(); i++){
+/* Return true if ray r intersect the rectangle defined in the plane (corner, n)
+ * by the point corner and the side vectors t_x and t_y.
+ */
+static bool intersect_rectangle(Ray r, Vec corner, Vec n, Vec t_x, Vec t_y){
+  double n_dot_u = n.dot(r.direction());
+  if(abs(n_dot_u) < 1e-10)  // u is tangeant to the plane
+      return false;
+  // cp is corner to intersection vector
+  Vec cp = r.origin() + r.direction() * n.dot(r.origin() - corner)/n_dot_u - corner;
+
+  double cp_dot_tx = cp.dot(t_x), cp_dot_ty = cp.dot(t_y);
+
+  return (
+      (cp_dot_tx >= 0) && (cp_dot_tx <= t_x.norm_sq())
+      && (cp_dot_ty >= 0) && (cp_dot_ty <= t_y.norm_sq())
+  );
+}
+
+/* Return true if the ray r intersect the box between min and max
+ */
+static bool intersect_box(Ray r, Vec min, Vec max){
+  Vec mm = max - min;
+
+  return (
+      intersect_rectangle(r, min, Vec(1, 0, 0), Vec(0, mm.y(), 0), Vec(0, 0, mm.z()))
+      || intersect_rectangle(r, min, Vec(0, 1, 0), Vec(mm.x(), 0, 0), Vec(0, 0, mm.z()))
+      || intersect_rectangle(r, min, Vec(0, 0, 1), Vec(mm.x(), 0, 0), Vec(0, mm.y(), 0))
+      || intersect_rectangle(r, max, Vec(1, 0, 0), Vec(0, -mm.y(), 0), Vec(0, 0, -mm.z()))
+      || intersect_rectangle(r, max, Vec(0, 1, 0), Vec(-mm.x(), 0, 0), Vec(0, 0, -mm.z()))
+      || intersect_rectangle(r, max, Vec(0, 0, 1), Vec(-mm.x(), 0, 0), Vec(0, -mm.y(), 0))
+  );
+}
+
+Mesh::Mesh(const char* obj, double scaling, const Vec& offset){
+  m_mesh = new RawMesh(obj, scaling, offset);
+  Indices indices(m_mesh->indices.size());
+
+  for(size_t i = 0; i < m_mesh->vertices.size(); i++){
     indices[i] = i;
   }
 
-  return new MeshBox(mesh, indices);
+  m_box = new MeshBox(*m_mesh, indices);
+}
+
+Mesh::~Mesh(){
+  delete m_mesh;
+  delete m_box;
 }
 
 RawMesh::RawMesh(const char* obj, double scaling, const Vec& offset){
@@ -22,13 +63,13 @@ RawMesh::RawMesh(const char* obj, double scaling, const Vec& offset){
   }
 }
 
-struct ix {int i; double x;};
+typedef struct {int i; double x;} LabeledX;
 
-static bool ix_lt(struct ix const& a, struct ix const& b){
+static bool lt(LabeledX const& a, LabeledX const& b){
   return a.x < b.x;
 }
 
-static double variance(std::vector<struct ix>::iterator begin, std::vector<struct ix>::iterator end){
+static double variance(std::vector<LabeledX>::iterator begin, std::vector<LabeledX>::iterator end){
   double s = 0, s_2 = 0;
   size_t n = 0;
   for(auto it = begin; it != end; it++, n++){
@@ -38,54 +79,55 @@ static double variance(std::vector<struct ix>::iterator begin, std::vector<struc
   return (s_2 - (s * s) / n) / n;
 }
 
-MeshBox::MeshBox(RawMesh const& mesh, std::vector<size_t> indices):
+MeshBox::MeshBox(RawMesh const& mesh, Indices indices):
   m_indices(indices), m_terminal(false) {
 
   int size = indices.size();
 
-  if(size <= 2){
+  if(size == 0){
+    return;
+  } else if(size <= 2){
     m_terminal = true;
-    // FIXME: less than two faces, dont build more boxes
-    // Copy all mesh data into a Mesh instance
-    m_mesh = new Mesh(mesh, indices);
+    m_center = mesh.vertices[indices[0]];
+    if(size == 2){
+      m_center = (m_center + mesh.vertices[indices[1]])/2;
+    }
   } else {
 
     int b_size = size / 2;
     int t_size = size - b_size;
 
-    std::vector<struct ix> centers[3] = {
-      std::vector<struct ix>(size),
-      std::vector<struct ix>(size),
-      std::vector<struct ix>(size)
+    std::vector<LabeledX> verts[3] = {
+      std::vector<LabeledX>(size),
+      std::vector<LabeledX>(size),
+      std::vector<LabeledX>(size)
     };
     for(int i = 0; i < size; i++){
-      Triangle tri = mesh.get_triangle(i);
-      Vec center = (tri.i() + tri.j() + tri.k()) / 3.0;
-      centers[0][i] = {i, center.x()};
-      centers[1][i] = {i, center.y()};
-      centers[2][i] = {i, center.z()};
+      Vec v = mesh.vertices[i];
+      verts[0][i] = {i, v.x()};
+      verts[1][i] = {i, v.y()};
+      verts[2][i] = {i, v.z()};
     }
     double vx, vy, vz;
-    vx = variance(centers[0].begin(), centers[0].end());
-    vy = variance(centers[1].begin(), centers[1].end());
-    vz = variance(centers[2].begin(), centers[2].end());
+    vx = variance(verts[0].begin(), verts[0].end());
+    vy = variance(verts[1].begin(), verts[1].end());
+    vz = variance(verts[2].begin(), verts[2].end());
     double mv = std::max(vx, std::max(vy, vz));
     int best_dir = vx == mv ? 0 : (vy == mv ? 1 : 2);
 
-    std::sort(centers[0].begin(), centers[0].end(), ix_lt);
-    std::sort(centers[1].begin(), centers[1].end(), ix_lt);
-    std::sort(centers[2].begin(), centers[2].end(), ix_lt);
+    std::sort(verts[0].begin(), verts[0].end(), lt);
+    std::sort(verts[1].begin(), verts[1].end(), lt);
+    std::sort(verts[2].begin(), verts[2].end(), lt);
 
-    m_vmin = Vec(centers[0][0].x, centers[1][0].x, centers[2][0].x);
-    m_vmax = Vec(centers[0][size-1].x, centers[1][size-1].x, centers[2][size-1].x);
-    // m_vmedian = Vec(centers[0][b_size].x, centers[1][b_size].x, centers[2][b_size].x);
+    m_vmin = Vec(verts[0][0].x, verts[1][0].x, verts[2][0].x);
+    m_vmax = Vec(verts[0][size-1].x, verts[1][size-1].x, verts[2][size-1].x);
 
-    std::vector<size_t> bottom(b_size), top(t_size);
+    Indices bottom(b_size), top(t_size);
     for(int i = 0; i < b_size; i++){
-      bottom[i] = centers[best_dir][i].i;
+      bottom[i] = verts[best_dir][i].i;
     }
     for(int i = 0; i < t_size; i++){
-      top[i] = centers[best_dir][b_size + i].i;
+      top[i] = verts[best_dir][b_size + i].i;
     }
 
     m_bottom = new MeshBox(mesh, bottom);
@@ -94,24 +136,21 @@ MeshBox::MeshBox(RawMesh const& mesh, std::vector<size_t> indices):
 }
 
 MeshBox::~MeshBox(){
+  /*
   if(m_top)
     delete m_top;
   if(m_bottom)
     delete m_bottom;
-  if(m_mesh)
-    delete m_mesh;
+    */
 }
 
-Intersection MeshBox::intersection(Ray const& r) const{
+TriIntersection MeshBox::intersection(Ray const& r) const{
   if(m_terminal){
-    std::cout << "Got this far.\n";
-    // check individual triangles
-    return m_mesh->intersection(r);
+    return TriIntersection(m_center, &m_indices);
   } else if(intersect_box(r, m_vmin, m_vmax)){
     // check own box and check sub boxes
-    Intersection i_top, i_bottom;
-    i_top = m_top->intersection(r);
-    i_bottom = m_bottom->intersection(r);
+    TriIntersection i_top = m_top->intersection(r);
+    TriIntersection i_bottom = m_bottom->intersection(r);
     if(i_top.valid() && i_bottom.valid()){
       if((i_top.position() - r.origin()).norm_sq() < (i_bottom.position() - r.origin()).norm_sq()){
         return i_top;
@@ -122,12 +161,9 @@ Intersection MeshBox::intersection(Ray const& r) const{
       return i_top;
     } else if(i_bottom.valid()){
       return i_bottom;
-    } else {
-      return Intersection();
     }
-  } else {
-    return Intersection();
   }
+  return TriIntersection(); // invalid intersection
 }
 
 void RawMesh::read_OBJ(const char* obj){
@@ -318,10 +354,30 @@ void RawMesh::read_OBJ(const char* obj){
 }
 
 void RawMesh::add_texture(const char* filename){
-  m_textures.push_back(Texture(filename));
+  textures.push_back(Texture(filename));
 }
 
-Intersection Triangle::intersection(Ray const& r, Texture const& tex){
+Intersection Mesh::intersection(Ray const& r) const{
+  TriIntersection inter = m_box->intersection(r);
+  if(inter.valid()){
+    size_t size = inter.indices().size();
+    for(size_t i = 0; i < size; i++){
+      Intersection sinter = Sphere(inter.position(), 1).intersection(r);
+      if(sinter.valid()){
+        sinter.is_mesh(true);
+        return sinter;
+      }
+    }
+  }
+  return Intersection();
+}
+
+Texture const& Mesh::get_texture(size_t i) const{
+  return m_mesh->textures[m_mesh->indices[i].vtxi];
+}
+
+/*
+Intersection tri_intersection(Ray const& r, Texture const& tex){
   Vec n = (m_i - m_j).prod(m_i - m_k);
 
   double n_dot_u = n.dot(r.direction());
@@ -337,63 +393,4 @@ Intersection Triangle::intersection(Ray const& r, Texture const& tex){
     return Intersection();
   }
 }
-
-Mesh::Mesh(RawMesh mesh, std::vector<size_t> indices){
-  size_t s = indices.size();
-  for(size_t i = 0; i < s; i++){
-    // FIXME copy data from mesh into this
-  }
-}
-
-Intersection Mesh::intersection(Ray const& r) const{
-  for(size_t i = 0; i < m_indices.size(); i++){
-    Triangle tri(m_vertices[m_indices[i].ni],
-          m_vertices[m_indices[i].nj],
-          m_vertices[m_indices[i].nk]);
-    Intersection inter = tri.intersection(r, get_texture(i));
-    if(inter.valid()){
-      return inter;
-    }
-  }
-  return Intersection();
-}
-
-Texture const& Mesh::get_texture(size_t i) const{
-  // FIXME
-  return *(new Texture("./misc/suzanne.mtl"));
-  return m_textures[m_indices[i].vtxi];
-}
-
-bool intersect_box(Ray r, Vec min, Vec max){
-  Vec mm = max - min;
-
-  return (
-      intersect_rectangle(r, min, Vec(1, 0, 0), Vec(0, mm.y(), 0), Vec(0, 0, mm.z()))
-      || intersect_rectangle(r, min, Vec(0, 1, 0), Vec(mm.x(), 0, 0), Vec(0, 0, mm.z()))
-      || intersect_rectangle(r, min, Vec(0, 0, 1), Vec(mm.x(), 0, 0), Vec(0, mm.y(), 0))
-      || intersect_rectangle(r, max, Vec(1, 0, 0), Vec(0, -mm.y(), 0), Vec(0, 0, -mm.z()))
-      || intersect_rectangle(r, max, Vec(0, 1, 0), Vec(-mm.x(), 0, 0), Vec(0, 0, -mm.z()))
-      || intersect_rectangle(r, max, Vec(0, 0, 1), Vec(-mm.x(), 0, 0), Vec(0, -mm.y(), 0))
-  );
-}
-
-static inline double abs(double x){
-  return (x > 0.0) ? x : -x;
-}
-
-bool intersect_rectangle(Ray r, Vec corner, Vec n, Vec t_x, Vec t_y){
-  /* corner is one corner of a rectangle, n is the normal to the plane,
-   * t_x and t_y defines the sides of the rectangle */
-  double n_dot_u = n.dot(r.direction());
-  if(abs(n_dot_u) < 1e-10)  // u is tangeant to the plane
-      return false;
-  // cp is corner to intersection vector
-  Vec cp = r.origin() + r.direction() * n.dot(r.origin() - corner)/n_dot_u - corner;
-
-  double cp_dot_tx = cp.dot(t_x), cp_dot_ty = cp.dot(t_y);
-
-  return (
-      (cp_dot_tx >= 0) && (cp_dot_tx <= t_x.norm_sq())
-      && (cp_dot_ty >= 0) && (cp_dot_ty <= t_y.norm_sq())
-  );
-}
+*/

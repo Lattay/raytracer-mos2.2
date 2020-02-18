@@ -21,11 +21,11 @@ class Scene {
     Vec get_color(Ray const& ray, Light const& sourcr) const;
     Vec get_color(Ray const& ray, Light const& source, int k, bool inside) const;
 
+    int add_mesh(Mesh const& mesh);
     // add a sphere to the scene with a reference
     int add_sphere(Sphere const& s);
     // add a sphere to the scene by allocating it
     int add_new_sphere(Sphere s);
-    int add_mesh(MeshBox* mesh);
 };
 
 #endif

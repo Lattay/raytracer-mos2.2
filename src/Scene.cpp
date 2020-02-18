@@ -96,7 +96,9 @@ Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) co
       Sample s = inter.material().reflex_dir(ray.direction(), n);
       Ray new_ray(inter.position() + epsilon * n, s.dir);
 
-      indirect = inter.material().color() * get_color(new_ray, source, k - 1, false);
+      Vec c = get_color(new_ray, source, k - 1, false);
+
+      indirect = inter.material().color() * c;
     }
 
     if(inter.material().direct_lighting()){
@@ -144,7 +146,7 @@ int Scene::add_new_sphere(Sphere s){
   return m_objects.size() - 1;
 }
 
-int Scene::add_mesh(MeshBox* mesh){
-  m_objects.push_back(mesh);
+int Scene::add_mesh(Mesh const& mesh){
+  m_objects.push_back(&mesh);
   return m_objects.size() - 1;
 }
