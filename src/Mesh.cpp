@@ -50,13 +50,15 @@ static bool intersect_box(Ray r, Vec min, Vec max){
 
 Mesh::Mesh(const char* obj, double scaling, const Vec& offset){
   m_mesh = new RawMesh(obj, scaling, offset);
+  /*
   Indices indices(m_mesh->indices.size());
 
   for(size_t i = 0; i < m_mesh->vertices.size(); i++){
     indices[i] = i;
   }
 
-  // m_box = new MeshBox(*m_mesh, indices);
+  m_box = new MeshBox(*m_mesh, indices);
+  */
 }
 
 Mesh::~Mesh(){
@@ -213,8 +215,7 @@ void RawMesh::read_OBJ(const char* obj){
       sscanf(line, "usemtl %[^\n]\n", grp);
       if (groupNames.find(std::string(grp)) != groupNames.end()) {
         curGroup = groupNames[std::string(grp)];
-      }
-      else {
+      } else {
         curGroup = groupNames.size();
         groupNames[std::string(grp)] = curGroup;
       }
@@ -225,7 +226,7 @@ void RawMesh::read_OBJ(const char* obj){
     if (line[0] == 'v' && line[1] == ' ') {
       Vec vec;
       Vec col;
-      if (sscanf(line, "v %lf %lf %lf %lf %lf %lf\n", &vec[0], &vec[2], &vec[1], &col[0], &col[1], &col[2]) == 6) {
+      if (sscanf(line, "v %lf %lf %lf %lf %lf %lf\n", &vec[0], &vec[1], &vec[2], &col[0], &col[1], &col[2]) == 6) {
         vertices.push_back(vec);
         vertex_colors.push_back(col);
       }
@@ -397,6 +398,7 @@ Intersection Mesh::intersection(Ray const& r) const{
       d_2 = (inter.position() - r.origin()).norm_sq();
       if(d_2 < min_d_2){
         closest = inter;
+        min_d_2 = d_2;
       }
     }
   }

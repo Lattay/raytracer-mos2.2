@@ -36,13 +36,13 @@ static void init_config(const char* file_name, Config* conf){
       sscanf(buffer, "H %d", &conf->H);
       std::cout << "H " << conf->H << std::endl;
     } else if(strncmp("field_depth ", buffer, 12) == 0){
-      sscanf(buffer, "field_depth %f", &conf->field_depth);
+      sscanf(buffer, "field_depth %lf", &conf->field_depth);
       std::cout << "field_depth " << conf->field_depth << std::endl;
     } else if(strncmp("focal_opening ", buffer, 14) == 0){
-      sscanf(buffer, "focal_opening %f", &conf->focal_opening);
+      sscanf(buffer, "focal_opening %lf", &conf->focal_opening);
       std::cout << "focal_opening " << conf->focal_opening << std::endl;
     } else if(strncmp("fov ", buffer, 4) == 0){
-      sscanf(buffer, "fov %f", &conf->fov);
+      sscanf(buffer, "fov %lf", &conf->fov);
       std::cout << "fov " << conf->fov << std::endl;
     } else {
       std::cout << buffer << std::endl;
@@ -63,10 +63,11 @@ int main() {
 
   // scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
-  scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
+  // scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
-  // Mesh mesh("./misc/cube.obj", 1, c);
-  // scene.add_mesh(mesh);
+  Mesh mesh("./misc/cube.obj", 1, c);
+  scene.add_mesh(mesh);
+  scene.add_new_sphere(Sphere(c, 3, red));
   // Vec box = mesh.box_size();
   // std::cout << "Box size " << box.x() << ", " << box.y() << ", " << box.z() << std::endl;
 
@@ -97,16 +98,13 @@ int main() {
       for(int i = 0; i < gconf.ray_number; i++){
 
         // Randomized direction to achieve anti-aliasing
-        Vec2 v = box_muller(0.5);
+        Vec2 v1 = box_muller(0.5);
         Vec2 v2 = box_muller(0.5);
 
-        double dx = (roll() - 0.5) * gconf.focal_opening;
-        double dy = (roll() - 0.5) * gconf.focal_opening;
-
-        Vec delta_c = Vec(dx, dy, 0);
+        Vec delta_c = Vec(v1.x, v1.y, 0)* gconf.focal_opening;
         Vec c_prim = origin + delta_c;
 
-        Vec dir = Vec(x + v.x, y + v.y, z).normalized() * gconf.field_depth - delta_c;
+        Vec dir = Vec(x + v2.x, y + v2.y, z).normalized() * gconf.field_depth - delta_c;
         Ray r(c_prim, dir);
 
         color = color + scene.get_color(r, light);
