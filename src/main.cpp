@@ -22,11 +22,11 @@ int main() {
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
   // scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
   scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
-  Mesh mesh = Mesh("./misc/suzanne.obj", 10, c);
-  Vec box = mesh.box_size();
-  std::cout << "Box size " << box.x() << ", " << box.y() << ", " << box.z() << std::endl;
-
+  Mesh mesh("./misc/cube.obj", 0.2, c);
   scene.add_mesh(mesh);
+  // Vec box = mesh.box_size();
+  // std::cout << "Box size " << box.x() << ", " << box.y() << ", " << box.z() << std::endl;
+
 
   scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, white));
   scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
@@ -54,10 +54,13 @@ int main() {
       for(int i = 0; i < ray_number; i++){
 
         // Randomized direction to achieve anti-aliasing
-        Vec2 v = box_muller(0.5);
-        Vec2 v2 = box_muller(0.5);
+        Vec2 v = box_muller(0.5 * focal_opening);
+        Vec2 v2 = box_muller(0.5 * focal_opening);
 
-        Vec delta_c = Vec(v2.x, v2.y, 0);
+        double dx = (roll() - 0.5) * focal_opening;
+        double dy = (roll() - 0.5) * focal_opening;
+
+        Vec delta_c = Vec(dx, dy, 0);
         Vec c_prim = origin + delta_c;
 
         Vec dir = Vec(x + v.x, y + v.y, z).normalized()*field_depth - delta_c;

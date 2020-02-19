@@ -17,13 +17,14 @@
 #include "Light.hpp"
 #include "random_tools.hpp"
 
-const int ray_number = 20;
+const int ray_number = 2;
 
 // Camera
 const int W = 512;
 const int H = 512;
 
 const double field_depth = 55;
+const double focal_opening = 0;
 
 const double fov = pi/3.0;
 

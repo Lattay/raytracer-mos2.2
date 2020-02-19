@@ -37,6 +37,8 @@ class TriIntersection final: public Intersection {
     Indices const& indices() const{return *m_indices;};
 };
 
+class Triangle;
+
 class RawMesh {
 
   public:
@@ -52,6 +54,21 @@ class RawMesh {
 
     void read_OBJ(const char* obj);
     void add_texture(const char* filename); 
+    Triangle get_tri(size_t i);
+};
+
+class Triangle final: public Object {
+  private:
+    Vec m_i, m_j, m_k, m_ni, m_nj, m_nk, m_uvi, m_uvj, m_uvk;
+    // Texture m_tex;
+
+  public:
+    Triangle(RawMesh const* mesh, TriangleIndices idc):
+      m_i(mesh->vertices[idc.vtxi]), m_j(mesh->vertices[idc.vtxj]), m_k(mesh->vertices[idc.vtxk]),
+      m_ni(mesh->vertices[idc.ni]), m_nj(mesh->vertices[idc.nj]), m_nk(mesh->vertices[idc.nk]),
+      m_uvi(mesh->vertices[idc.uvi]), m_uvj(mesh->vertices[idc.uvj]), m_uvk(mesh->vertices[idc.uvk])
+      /*, m_tex(mesh->textures[0]) */ {};
+    virtual Intersection intersection(Ray const& r) const;
 };
 
 class MeshBox {
@@ -66,8 +83,9 @@ class MeshBox {
     ~MeshBox();
     MeshBox(RawMesh const& mesh, Indices indices);
 
-    TriIntersection intersection(Ray const& r) const;
+    TriIntersection tri_intersection(Ray const& r) const;
     Vec box_size() const { return m_vmax - m_vmin; };
+    Intersection intersection(Ray const& r) const;
 };
 
 class Mesh final: public Object{

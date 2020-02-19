@@ -25,6 +25,14 @@ static bool intersect_rectangle(Ray r, Vec corner, Vec n, Vec t_x, Vec t_y){
   );
 }
 
+static Vec rectangle_intersection(Ray r, Vec corner, Vec n){
+  double n_dot_u = n.dot(r.direction());
+  if(abs(n_dot_u) < 1e-10)  // u is tangeant to the plane
+      return Vec(0, 0, 0);
+  // cp is corner to intersection vector
+  return r.origin() + r.direction() * n.dot(r.origin() - corner)/n_dot_u;
+}
+
 /* Return true if the ray r intersect the box between min and max
  */
 static bool intersect_box(Ray r, Vec min, Vec max){
@@ -48,12 +56,12 @@ Mesh::Mesh(const char* obj, double scaling, const Vec& offset){
     indices[i] = i;
   }
 
-  m_box = new MeshBox(*m_mesh, indices);
+  // m_box = new MeshBox(*m_mesh, indices);
 }
 
 Mesh::~Mesh(){
   delete m_mesh;
-  delete m_box;
+  // delete m_box;
 }
 
 RawMesh::RawMesh(const char* obj, double scaling, const Vec& offset){
@@ -67,16 +75,6 @@ typedef struct {int i; double x;} LabeledX;
 
 static bool lt(LabeledX const& a, LabeledX const& b){
   return a.x < b.x;
-}
-
-static double variance(std::vector<LabeledX>::iterator begin, std::vector<LabeledX>::iterator end){
-  double s = 0, s_2 = 0;
-  size_t n = 0;
-  for(auto it = begin; it != end; it++, n++){
-    s += (*it).x;
-    s_2 += (*it).x * (*it).x;
-  }
-  return (s_2 - (s * s) / n) / n;
 }
 
 MeshBox::MeshBox(RawMesh const& mesh, Indices indices):
@@ -108,19 +106,18 @@ MeshBox::MeshBox(RawMesh const& mesh, Indices indices):
       verts[1][i] = {i, v.y()};
       verts[2][i] = {i, v.z()};
     }
-    double vx, vy, vz;
-    vx = variance(verts[0].begin(), verts[0].end());
-    vy = variance(verts[1].begin(), verts[1].end());
-    vz = variance(verts[2].begin(), verts[2].end());
-    double mv = std::max(vx, std::max(vy, vz));
-    int best_dir = vx == mv ? 0 : (vy == mv ? 1 : 2);
-
-    std::sort(verts[0].begin(), verts[0].end(), lt);
-    std::sort(verts[1].begin(), verts[1].end(), lt);
-    std::sort(verts[2].begin(), verts[2].end(), lt);
 
     m_vmin = Vec(verts[0][0].x, verts[1][0].x, verts[2][0].x);
     m_vmax = Vec(verts[0][size-1].x, verts[1][size-1].x, verts[2][size-1].x);
+
+    /*
+    double vx, vy, vz;
+    vx = (*verts[0].end()).x - (*verts[0].begin()).x;
+    vy = (*verts[1].end()).x - (*verts[1].begin()).x;
+    vz = (*verts[2].end()).x - (*verts[2].begin()).x;
+    double mv = std::max(vx, std::max(vy, vz));
+
+    int best_dir = vx == mv ? 0 : (vy == mv ? 1 : 2);
 
     Indices bottom(b_size), top(t_size);
     for(int i = 0; i < b_size; i++){
@@ -132,6 +129,7 @@ MeshBox::MeshBox(RawMesh const& mesh, Indices indices):
 
     m_bottom = new MeshBox(mesh, bottom);
     m_top = new MeshBox(mesh, top);
+    */
   }
 }
 
@@ -144,11 +142,38 @@ MeshBox::~MeshBox(){
     */
 }
 
-TriIntersection MeshBox::intersection(Ray const& r) const{
+Intersection MeshBox::intersection(Ray const& r) const{
+  Vec mm = m_vmax - m_vmin;
+
+  if(intersect_rectangle(r, m_vmin, Vec(1, 0, 0), Vec(0, mm.y(), 0), Vec(0, 0, mm.z()))){
+    return Intersection(rectangle_intersection(r, m_vmin, Vec(1, 0, 0)), Vec(1, 0, 0), white_emit);
+  }
+  if(intersect_rectangle(r, m_vmin, Vec(0, 1, 0), Vec(mm.x(), 0, 0), Vec(0, 0, mm.z()))){
+    return Intersection(rectangle_intersection(r, m_vmin, Vec(0, 1, 0)), Vec(0, 1, 0), white_emit);
+  }
+  if(intersect_rectangle(r, m_vmin, Vec(0, 0, 1), Vec(mm.x(), 0, 0), Vec(0, mm.y(), 0))){
+    return Intersection(rectangle_intersection(r, m_vmin, Vec(0, 0, 1)), Vec(0, 0, 1), white_emit);
+  }
+  if(intersect_rectangle(r, m_vmax, Vec(1, 0, 0), Vec(0, -mm.y(), 0), Vec(0, 0, -mm.z()))){
+    return Intersection(rectangle_intersection(r, m_vmax, Vec(1, 0, 0)), Vec(-1, 0, 0), white_emit);
+  }
+  if(intersect_rectangle(r, m_vmax, Vec(0, 1, 0), Vec(-mm.x(), 0, 0), Vec(0, 0, -mm.z()))){
+    return Intersection(rectangle_intersection(r, m_vmax, Vec(0, 1, 0)), Vec(0, -1, 0), white_emit);
+  }
+  if(intersect_rectangle(r, m_vmax, Vec(0, 0, 1), Vec(-mm.x(), 0, 0), Vec(0, -mm.y(), 0))){
+    return Intersection(rectangle_intersection(r, m_vmax, Vec(0, 0, 1)), Vec(0, 0, -1), white_emit);
+  }
+  return Intersection();
+}
+
+TriIntersection MeshBox::tri_intersection(Ray const& r) const{
+  /*
   if(m_terminal){
     return TriIntersection(m_center, &m_indices);
   } else if(intersect_box(r, m_vmin, m_vmax)){
     // check own box and check sub boxes
+    //
+    return box_intersection(r, m_vmin, m_vmax);
     TriIntersection i_top = m_top->intersection(r);
     TriIntersection i_bottom = m_bottom->intersection(r);
     if(i_top.valid() && i_bottom.valid()){
@@ -164,6 +189,7 @@ TriIntersection MeshBox::intersection(Ray const& r) const{
     }
   }
   return TriIntersection(); // invalid intersection
+  */
 }
 
 void RawMesh::read_OBJ(const char* obj){
@@ -204,14 +230,14 @@ void RawMesh::read_OBJ(const char* obj){
         vertex_colors.push_back(col);
       }
       else {
-        sscanf(line, "v %lf %lf %lf\n", &vec[0], &vec[2], &vec[1]);  // helmet
+        sscanf(line, "v %lf %lf %lf\n", &vec[0], &vec[1], &vec[2]);  // helmet
         //vec[2] = -vec[2]; //car2
         vertices.push_back(vec);
       }
     }
     if (line[0] == 'v' && line[1] == 'n') {
       Vec vec;
-      sscanf(line, "vn %lf %lf %lf\n", &vec[0], &vec[2], &vec[1]); //girl
+      sscanf(line, "vn %lf %lf %lf\n", &vec[0], &vec[1], &vec[2]); //girl
       normals.push_back(vec);
     }
     if (line[0] == 'v' && line[1] == 't') {
@@ -358,7 +384,26 @@ void RawMesh::add_texture(const char* filename){
 }
 
 Intersection Mesh::intersection(Ray const& r) const{
-  TriIntersection inter = m_box->intersection(r);
+
+  double d_2, min_d_2 = 1e10;
+
+  Intersection closest;
+
+  for(auto it = m_mesh->indices.begin(); it != m_mesh->indices.end(); ++it){
+    Triangle tri(m_mesh, *it);
+
+    Intersection inter = tri.intersection(r);
+    if(inter.valid()){
+      d_2 = (inter.position() - r.origin()).norm_sq();
+      if(d_2 < min_d_2){
+        closest = inter;
+      }
+    }
+  }
+  return closest;
+
+  /*
+  TriIntersection inter = m_box->tri_intersection(r);
   if(inter.valid()){
     size_t size = inter.indices().size();
     for(size_t i = 0; i < size; i++){
@@ -370,10 +415,27 @@ Intersection Mesh::intersection(Ray const& r) const{
     }
   }
   return Intersection();
+  */
 }
 
 Texture const& Mesh::get_texture(size_t i) const{
   return m_mesh->textures[m_mesh->indices[i].vtxi];
+}
+
+Intersection Triangle::intersection(Ray const& r) const{
+  Vec n = (m_j - m_i).prod(m_k - m_i).normalized();
+
+  double n_dot_u = n.dot(r.direction());
+  if(abs(n_dot_u) < 1e-30){
+    return Intersection();
+  }
+  Vec p = r.origin() + n.dot(m_i - r.origin())/n_dot_u * r.direction();
+
+  if((p - m_i).dot(m_j - m_i) < m_j.norm_sq()
+      && (p - m_i).dot(m_k - m_i) < m_k.norm_sq()){
+    return Intersection(p, n, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, p)*/);
+  }
+  return Intersection();
 }
 
 /*
