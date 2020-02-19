@@ -2,7 +2,9 @@
 #define MAIN_HPP
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <omp.h>
+#include <cstring>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../vendor/stb_image_write.h"
@@ -17,18 +19,22 @@
 #include "Light.hpp"
 #include "random_tools.hpp"
 
-const int ray_number = 2;
-
-// Camera
-const int W = 512;
-const int H = 512;
-
-const double field_depth = 55;
-const double focal_opening = 0;
-
-const double fov = pi/3.0;
 
 const Vec origin(0, 0, 55);
+
+typedef struct {
+  int ray_number = 1;
+
+  // Camera
+  int W = 512;
+  int H = 512;
+
+  double field_depth = 55;
+  double focal_opening = 0;
+
+  double fov = pi/3.0;
+  
+} Config;
 
 // Light source
 const Light light(Vec(-10, 20, 40), 5e8, 10);
