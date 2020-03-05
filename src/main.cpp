@@ -1,7 +1,5 @@
 #include "main.hpp" 
 
-static Config gconf; 
- 
 static int clamp(double d){
   return std::max(0, std::min(255, (int) ceil(d)));
 }
@@ -64,8 +62,8 @@ int main() {
   // scene.add_new_sphere(Sphere(c, 10, white));
   scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
   // scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
-  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, purple));
-  Mesh mesh("./misc/cube.obj", 1, c);
+  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, white_emit));
+  Mesh mesh("./misc/cube.obj", 0.5, c);
   scene.add_mesh(mesh);
   scene.add_new_sphere(Sphere(c, 3, red));
   // Vec box = mesh.box_size();

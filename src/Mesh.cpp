@@ -395,6 +395,7 @@ Intersection Mesh::intersection(Ray const& r) const{
 
     Intersection inter = tri.intersection(r);
     if(inter.valid()){
+      return inter;
       d_2 = (inter.position() - r.origin()).norm_sq();
       if(d_2 < min_d_2){
         closest = inter;
@@ -403,21 +404,6 @@ Intersection Mesh::intersection(Ray const& r) const{
     }
   }
   return closest;
-
-  /*
-  TriIntersection inter = m_box->tri_intersection(r);
-  if(inter.valid()){
-    size_t size = inter.indices().size();
-    for(size_t i = 0; i < size; i++){
-      Intersection sinter = Sphere(inter.position(), 1).intersection(r);
-      if(sinter.valid()){
-        sinter.is_mesh(true);
-        return sinter;
-      }
-    }
-  }
-  return Intersection();
-  */
 }
 
 Texture const& Mesh::get_texture(size_t i) const{
@@ -427,34 +413,26 @@ Texture const& Mesh::get_texture(size_t i) const{
 Intersection Triangle::intersection(Ray const& r) const{
   Vec n = (m_j - m_i).prod(m_k - m_i).normalized();
 
+  if(n.dot(m_ni) < 0){
+    n = -n;
+  }
+
   double n_dot_u = n.dot(r.direction());
-  if(abs(n_dot_u) < 1e-30){
+  if(n_dot_u < 1e-30){
     return Intersection();
   }
-  Vec p = r.origin() + n.dot(m_i - r.origin())/n_dot_u * r.direction();
+  Vec p = r.origin() + (n.dot(m_i - r.origin())/n_dot_u) * r.direction();
 
-  if((p - m_i).dot(m_j - m_i) < m_j.norm_sq()
-      && (p - m_i).dot(m_k - m_i) < m_k.norm_sq()){
+  double xi = (p - m_j).dot(m_i - m_j);
+  double xj = (p - m_i).dot(m_j - m_i);
+  double xk = (p - m_i).dot(m_k - m_i);
+
+  if(0 <= xj && xj < (m_j - m_i).norm_sq()
+      && 0 <= xk && xk < (m_k - m_i).norm_sq()
+      && 0 <= xi && xi < (m_i - m_j).norm_sq()){
     return Intersection(p, n, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, p)*/);
   }
+
   return Intersection();
 }
 
-/*
-Intersection tri_intersection(Ray const& r, Texture const& tex){
-  Vec n = (m_i - m_j).prod(m_i - m_k);
-
-  double n_dot_u = n.dot(r.direction());
-  if(abs(n_dot_u) < 1e-10){
-    return Intersection();
-  }
-  Vec p = r.origin() + n.dot(m_i - r.origin())/n_dot_u * r.direction();
-
-  if((m_i - p).dot(m_i - m_j) < m_j.norm_sq()
-      && (m_i - p).dot(m_i - m_k) < m_k.norm_sq()){
-    return Intersection(p, n, tex.get_diffuse(m_i, m_j, m_k, p));
-  } else {
-    return Intersection();
-  }
-}
-*/
