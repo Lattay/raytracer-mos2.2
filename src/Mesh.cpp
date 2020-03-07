@@ -69,7 +69,7 @@ Mesh::~Mesh(){
 RawMesh::RawMesh(const char* obj, double scaling, const Vec& offset){
   read_OBJ(obj);
   for (size_t i = 0; i < vertices.size(); i++) {
-    vertices[i] = vertices[i] * scaling + offset;
+    vertices[i] = (scaling * vertices[i]) + offset;
   }
 }
 
@@ -168,38 +168,16 @@ Intersection MeshBox::intersection(Ray const& r) const{
   return Intersection();
 }
 
-TriIntersection MeshBox::tri_intersection(Ray const& r) const{
-  /*
-  if(m_terminal){
-    return TriIntersection(m_center, &m_indices);
-  } else if(intersect_box(r, m_vmin, m_vmax)){
-    // check own box and check sub boxes
-    //
-    return box_intersection(r, m_vmin, m_vmax);
-    TriIntersection i_top = m_top->intersection(r);
-    TriIntersection i_bottom = m_bottom->intersection(r);
-    if(i_top.valid() && i_bottom.valid()){
-      if((i_top.position() - r.origin()).norm_sq() < (i_bottom.position() - r.origin()).norm_sq()){
-        return i_top;
-      } else {
-        return i_bottom;
-      }
-    } else if(i_top.valid()){
-      return i_top;
-    } else if(i_bottom.valid()){
-      return i_bottom;
-    }
-  }
-  return TriIntersection(); // invalid intersection
-  */
-}
-
 void RawMesh::read_OBJ(const char* obj){
   char matfile[255];
   char grp[255];
 
   FILE* f;
   f = fopen(obj, "r");
+  if(!f){
+    std::cerr << "Cannot open " << obj << std::endl;
+    exit(1);
+  }
 
   std::map<std::string, int> groupNames;
   int curGroup = -1;
@@ -411,9 +389,10 @@ Texture const& Mesh::get_texture(size_t i) const{
 }
 
 Intersection Triangle::intersection(Ray const& r) const{
-  Vec n = (m_j - m_i).prod(m_k - m_i).normalized();
-
-  if(n.dot(m_ni) < 0){
+  Vec vk = m_k - m_i;
+  Vec vj = m_j - m_i;
+  Vec n = vk.prod(vj).normalized();
+  if((m_ni + m_nk + m_nj).dot(n) < 0){
     n = -n;
   }
 
@@ -421,15 +400,20 @@ Intersection Triangle::intersection(Ray const& r) const{
   if(n_dot_u < 1e-30){
     return Intersection();
   }
-  Vec p = r.origin() + (n.dot(m_i - r.origin())/n_dot_u) * r.direction();
+  Vec p = r.origin() - (n.dot(m_i - r.origin())/n_dot_u) * r.direction();
+  Vec vp = p - m_i;
 
-  double xi = (p - m_j).dot(m_i - m_j);
-  double xj = (p - m_i).dot(m_j - m_i);
-  double xk = (p - m_i).dot(m_k - m_i);
+  double k_dot_k = vk.norm_sq();
+  double k_dot_j = vk.dot(vj);
+  double k_dot_p = vk.dot(vp);
+  double j_dot_j = vj.norm_sq();
+  double j_dot_p = vj.dot(vp);
 
-  if(0 <= xj && xj < (m_j - m_i).norm_sq()
-      && 0 <= xk && xk < (m_k - m_i).norm_sq()
-      && 0 <= xi && xi < (m_i - m_j).norm_sq()){
+  double inv_denom = 1/(k_dot_k * j_dot_j - k_dot_j * k_dot_j);
+  double u = (j_dot_j * k_dot_p - k_dot_j * j_dot_p) * inv_denom;
+  double v = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
+
+  if(u >= 0 && v >= 0 && (u + v) < 1){
     return Intersection(p, n, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, p)*/);
   }
 

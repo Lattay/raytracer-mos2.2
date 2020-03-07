@@ -6,7 +6,10 @@
 
 class Vec {
   private:
-    double m_x, m_y, m_z;
+    union {
+      struct {double m_x, m_y, m_z;};
+      double v[3];
+    };
 
   public:
 
@@ -20,12 +23,7 @@ class Vec {
 
     double &operator[](int i){
       assert(i < 3 && i >= 0);
-      switch(i){
-        case 0: return m_x;
-        case 1: return m_y;
-        case 2: return m_z;
-        default: return m_x; // unreachable
-      }
+      return v[i];
     }
 
     Vec():
