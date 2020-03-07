@@ -29,6 +29,7 @@ typedef struct {
   double antialiasing = 2;
 
   Vec camera = Vec(0, 0, 55);
+  Vec direction = Vec(0, 0, -1);
   double light_intensity = 5e8;
 } Config;
 

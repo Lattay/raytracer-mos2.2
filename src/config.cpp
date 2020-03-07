@@ -47,7 +47,9 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       sscanf(buffer, "antialiasing %lf", &conf.antialiasing);
       std::cout << "antialiasing " << conf.antialiasing << std::endl;
     } else if(strncmp("camera ", buffer, 7) == 0){
-      sscanf(buffer, "camera %lf %lf %lf", &conf.camera[0], &conf.camera[1], &conf.camera[2]);
+      sscanf(buffer, "camera %lf %lf %lf %lf %lf %lf",
+          &conf.camera[0], &conf.camera[1], &conf.camera[2],
+          &conf.direction[0], &conf.direction[1], &conf.direction[2]);
       std::cout << "camera (" << conf.camera.x() << ", " << conf.camera.y() << ", " << conf.camera.z() << ")" << std::endl;
     } else if(strncmp("sphere ", buffer, 7) == 0){
       Vec offset;
@@ -89,7 +91,7 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       double scaling;
       sscanf(buffer, "mesh %s %lf %lf %lf %lf", obj_file, &scaling, &offset[0], &offset[1], &offset[2]);
       std::cout << "Add a mesh from " << obj_file << std::endl;
-      scene.add_new_mesh(Mesh(obj_file, scaling, offset));
+      scene.add_mesh(*(new Mesh(obj_file, offset, scaling)));
     } else {
       std::cout << "unexpected line: " << buffer << std::endl;
     }

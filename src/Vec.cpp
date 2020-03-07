@@ -57,3 +57,19 @@ Vec Vec::prod(Vec const& b) const{
 Vec Vec::normalized() const{
   return (*this)/norm();
 }
+
+Vec Vec::rotate(Base b) const{
+  double x = b.x.x() * m_x + b.y.x() * m_y + b.z.x() * m_z;
+  double y = b.x.y() * m_x + b.y.y() * m_y + b.z.y() * m_z;
+  double z = b.x.z() * m_x + b.y.z() * m_y + b.z.z() * m_z;
+  return Vec(x, y, z);
+}
+
+/* Create a base where xOz is the same plane as in canonical base
+ * This way, when the camera looks in Oz+ direction whith 0x+ as vertical
+ * the view is not rotated
+ */
+Base base_from(Vec const& z){
+  Vec x = Vec(0, 1, 0).prod(z);
+  return {x.normalized(), z.prod(x).normalized(), z.normalized()};
+}

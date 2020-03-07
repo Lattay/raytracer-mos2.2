@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cassert>
 
+typedef struct _b Base;
+
 class Vec {
   private:
     union {
@@ -37,9 +39,11 @@ class Vec {
     Vec prod(Vec const& b) const;
 
     Vec normalized() const;
+
+    Vec rotate(Base b) const;
 };
 
-typedef struct {Vec x; Vec y; Vec z;} Base;
+typedef struct _b { Vec x, y, z; } Base;
 
 Vec operator*(Vec const& v, double f);
 Vec operator*(double f, Vec const& v);
@@ -49,5 +53,7 @@ Vec operator+(Vec const& a, Vec const& b);
 Vec operator-(Vec const& a, Vec const& b);
 Vec operator-(Vec const& a);
 std::ostream& operator<<(std::ostream& a, Vec const& b);
+
+Base base_from(Vec const& z);
 
 #endif
