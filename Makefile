@@ -1,9 +1,11 @@
 CPP=g++
 DEBUG=0
 OMP=1
-CFLAGS=-Wall -Wextra -Wpedantic --std=c++11 -O3
+CFLAGS=-Wall -Wextra -Wpedantic --std=c++11
 ifeq ($(DEBUG),1)
-	CFLAGS+=-g
+	CFLAGS+=-g -Og
+else
+	CFLAGS+=-O3 
 endif
 ifeq ($(OMP),1)
 	CFLAGS+=-fopenmp
@@ -19,7 +21,7 @@ all: main
 
 run: main
 	./main
-	xdg-open ./image.png &
+	/home/theo/.local/bin/xdg-open ./image.png &
 
 debug: main
 	gdb ./main
