@@ -12,79 +12,23 @@ static Vec vgamma(Vec const& v){
   return Vec(_gamma(v.x()), _gamma(v.y()), _gamma(v.z()));
 }
 
-static void init_config(const char* file_name, Config* conf){
-  std::ifstream file;
-
-  file.open(file_name);
-  char buffer[255];
-
-  while(!file.eof()){
-    if(file.fail()){
-      std::cerr << "Something wrong happened with config." << std::endl;
-      exit(1);
-    }
-    file.getline(buffer, 255);
-    if(strncmp("ray_number ", buffer, 11) == 0){
-      sscanf(buffer, "ray_number %d", &conf->ray_number);
-      std::cout << "ray_number " << conf->ray_number << std::endl;
-    } else if(strncmp("W ", buffer, 2) == 0){
-      sscanf(buffer, "W %d", &conf->W);
-      std::cout << "W " << conf->W << std::endl;
-    } else if(strncmp("H ", buffer, 2) == 0){
-      sscanf(buffer, "H %d", &conf->H);
-      std::cout << "H " << conf->H << std::endl;
-    } else if(strncmp("field_depth ", buffer, 12) == 0){
-      sscanf(buffer, "field_depth %lf", &conf->field_depth);
-      std::cout << "field_depth " << conf->field_depth << std::endl;
-    } else if(strncmp("focal_opening ", buffer, 14) == 0){
-      sscanf(buffer, "focal_opening %lf", &conf->focal_opening);
-      std::cout << "focal_opening " << conf->focal_opening << std::endl;
-    } else if(strncmp("fov ", buffer, 4) == 0){
-      sscanf(buffer, "fov %lf", &conf->fov);
-      std::cout << "fov " << conf->fov << std::endl;
-    } else {
-      std::cout << buffer << std::endl;
-    }
-  }
-  file.close();
-}
-
 int main() {
+
+  // Setup scene
+  Config gconf; Scene scene;
+
+  init_config("./raytracer.cfg", gconf, scene);
+
+  Light light(Vec(-10, 20, 40), gconf.light_intensity, 10);
+  std::cout << "Scene ready." << std::endl;
+  
+  // Start rendering
+  std::vector<float> image(gconf.W * gconf.H * 3, 0);
 
   std::cout << "Working on maximum of " << omp_get_max_threads() << " threads." << std::endl;
 
-  Scene scene;
-
-  Config gconf;
-
-  init_config("./raytracer.cfg", &gconf);
-
-  // scene.add_new_sphere(Sphere(c, 10, white));
-  scene.add_new_sphere(Sphere(c - Vec(15, 0, 0), 10, mirror));
-  // scene.add_new_sphere(Sphere(c + Vec(15, 0, 40), 10, light_blue));
-  scene.add_new_sphere(Sphere(c + Vec(-8, 8, 10), 3, white_emit));
-  Mesh mesh("./misc/cube.obj", 0.5, c);
-  scene.add_mesh(mesh);
-  scene.add_new_sphere(Sphere(c, 3, red));
-  // Vec box = mesh.box_size();
-  // std::cout << "Box size " << box.x() << ", " << box.y() << ", " << box.z() << std::endl;
-
-
-  scene.add_new_sphere(Sphere(Vec(0, 1000, 0), 940, white));
-  scene.add_new_sphere(Sphere(Vec(0, 0, -1000), 940, green));
-  scene.add_new_sphere(Sphere(Vec(-1000, 0, 0), 940, yellow));
-  scene.add_new_sphere(Sphere(Vec(1000, 0, 0), 940, yellow));
-  scene.add_new_sphere(Sphere(Vec(0, -1000, 0), 985, blue));
-
-  std::cout << "Scene ready." << std::endl;
-  
-  // This one should be invisible unless there is a bug (or a reflexion)
-  // scene.add_new_sphere(Sphere(Vec(0, 0, 1000), 940, purple));
-
-  std::vector<float> image(gconf.W * gconf.H * 3, 0);
-
   for (int i = 0; i < gconf.H; i++) {
-#pragma omp parallel for schedule(dynamic, gconf.H/8)
+    #pragma omp parallel for schedule(dynamic, gconf.H/8)
     for (int j = 0; j < gconf.W; j++) {
 
       double x, y, z;
@@ -94,15 +38,15 @@ int main() {
 
       Vec color(0, 0, 0);
       for(int i = 0; i < gconf.ray_number; i++){
-
-        // Randomized direction to achieve anti-aliasing
+        // Randomized ray origin position for focal blur
         Vec2 v1 = box_muller(0.5);
-        Vec2 v2 = box_muller(0.5);
+        Vec delta_c = gconf.focal_opening * Vec(v1.x, v1.y, 0);
+        Vec c_prim = gconf.camera + delta_c;
 
-        Vec delta_c = Vec(v1.x, v1.y, 0)* gconf.focal_opening;
-        Vec c_prim = origin + delta_c;
+        // Randomized direction for anti-aliasing
+        Vec2 v2 = box_muller(0.1 * gconf.antialiasing);
+        Vec dir = gconf.field_depth * Vec(x + v2.x, y + v2.y, z).normalized() - delta_c;
 
-        Vec dir = Vec(x + v2.x, y + v2.y, z).normalized() * gconf.field_depth - delta_c;
         Ray r(c_prim, dir);
 
         color = color + scene.get_color(r, light);
@@ -118,7 +62,7 @@ int main() {
 
   // Convert float intensity to uchar pixel value
   std::vector<unsigned char> file_buffer(gconf.W*gconf.H * 3, 0);
-#pragma omp parallel for schedule(dynamic, gconf.H/8)
+  #pragma omp parallel for schedule(dynamic, gconf.H/8)
   for (int i = 0; i < gconf.H; i++) {
     for (int j = 0; j < gconf.W; j++) {
       file_buffer[(i * gconf.W + j) * 3 + 0] = clamp(image[(i * gconf.W + j) * 3 + 0]);

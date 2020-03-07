@@ -2,9 +2,7 @@
 #define MAIN_HPP
 #include <vector>
 #include <iostream>
-#include <fstream>
 #include <omp.h>
-#include <cstring>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../vendor/stb_image_write.h"
@@ -18,41 +16,6 @@
 #include "Scene.hpp"
 #include "Light.hpp"
 #include "random_tools.hpp"
-
-
-const Vec origin(0, 0, 55);
-
-typedef struct {
-  int ray_number = 1;
-
-  // Camera
-  int W = 512;
-  int H = 512;
-
-  double field_depth = 55;
-  double focal_opening = 0;
-
-  double fov = pi/3.0;
-  
-} Config;
-
-// Light source
-const Light light(Vec(-10, 20, 40), 5e8, 10);
-
-// colors
-const Transparent glass(1.5);
-const Transparent water(1.2);
-const Diffuse black(Vec(0, 0, 0));
-const Diffuse red(Vec(1, 0, 0));
-const Diffuse light_blue(Vec(0.5, 0.5, 1));
-const Diffuse blue(Vec(0, 0, 1));
-const Diffuse green(Vec(0, 1, 0));
-const Diffuse yellow(Vec(1, 1, 0));
-const Diffuse purple(Vec(1, 0, 1));
-const Diffuse white(Vec(1, 1, 1));
-const Reflective mirror(0.9);
-
-// Scene
-const Vec c(0, 0, 0);
+#include "config.hpp"
 
 #endif

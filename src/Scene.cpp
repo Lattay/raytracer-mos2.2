@@ -141,12 +141,17 @@ int Scene::add_sphere(Sphere const& s){
   return m_objects.size() - 1;
 }
 
-int Scene::add_new_sphere(Sphere s){
+int Scene::add_new_sphere(Sphere const& s){
   m_objects.push_back(new Sphere(s));
   return m_objects.size() - 1;
 }
 
 int Scene::add_mesh(Mesh const& mesh){
   m_objects.push_back(&mesh);
+  return m_objects.size() - 1;
+}
+
+int Scene::add_new_mesh(Mesh const& mesh){
+  m_objects.push_back(new Mesh(mesh));
   return m_objects.size() - 1;
 }
