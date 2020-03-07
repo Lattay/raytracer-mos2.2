@@ -48,8 +48,8 @@ static bool intersect_box(Ray r, Vec min, Vec max){
   );
 }
 
-Mesh::Mesh(const char* obj, double scaling, const Vec& offset){
-  m_mesh = new RawMesh(obj, scaling, offset);
+Mesh::Mesh(const char* obj, const Vec& offset, double scaling){
+  m_mesh = new RawMesh(obj, offset, scaling);
   /*
   Indices indices(m_mesh->indices.size());
 
@@ -66,9 +66,11 @@ Mesh::~Mesh(){
   // delete m_box;
 }
 
-RawMesh::RawMesh(const char* obj, double scaling, const Vec& offset){
+RawMesh::RawMesh(const char* obj, const Vec& offset, double scaling){
   read_OBJ(obj);
-  for (size_t i = 0; i < vertices.size(); i++) {
+  std::cout << "Loading mesh from " << obj
+    << " at (" << offset.x() << ", " << offset.y() << ", " << offset.z() << ")" << std::endl;
+  for(size_t i = 0; i < vertices.size(); i++) {
     vertices[i] = (scaling * vertices[i]) + offset;
   }
 }
@@ -391,10 +393,7 @@ Texture const& Mesh::get_texture(size_t i) const{
 Intersection Triangle::intersection(Ray const& r) const{
   Vec vk = m_k - m_i;
   Vec vj = m_j - m_i;
-  Vec n = vk.prod(vj).normalized();
-  if((m_ni + m_nk + m_nj).dot(n) < 0){
-    n = -n;
-  }
+  Vec n = (m_ni + m_nk + m_nj).normalized();
 
   double n_dot_u = n.dot(r.direction());
   if(n_dot_u < 1e-30){

@@ -50,7 +50,7 @@ class RawMesh {
     std::vector<Texture> textures;
 
     RawMesh() {};
-    RawMesh(const char* obj, double scaling, const Vec& offset);
+    RawMesh(const char* obj, const Vec& offset, double scaling);
 
     void read_OBJ(const char* obj);
     void add_texture(const char* filename); 
@@ -65,8 +65,8 @@ class Triangle final: public Object {
   public:
     Triangle(RawMesh const* mesh, TriangleIndices idc):
       m_i(mesh->vertices[idc.vtxi]), m_j(mesh->vertices[idc.vtxj]), m_k(mesh->vertices[idc.vtxk]),
-      m_ni(mesh->vertices[idc.ni]), m_nj(mesh->vertices[idc.nj]), m_nk(mesh->vertices[idc.nk]),
-      m_uvi(mesh->vertices[idc.uvi]), m_uvj(mesh->vertices[idc.uvj]), m_uvk(mesh->vertices[idc.uvk])
+      m_ni(mesh->normals[idc.ni]), m_nj(mesh->normals[idc.nj]), m_nk(mesh->normals[idc.nk]),
+      m_uvi(mesh->uvs[idc.uvi]), m_uvj(mesh->uvs[idc.uvj]), m_uvk(mesh->uvs[idc.uvk])
       /*, m_tex(mesh->textures[0]) */ {};
     virtual Intersection intersection(Ray const& r) const;
 };
@@ -96,7 +96,7 @@ class Mesh final: public Object{
 
   public:
     Mesh() {};
-    Mesh(const char* obj, double scaling, const Vec& offset);
+    Mesh(const char* obj, const Vec& offset, double scaling);
     ~Mesh();
 
 
