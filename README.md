@@ -45,3 +45,7 @@ The code for a given step correspond to a git tag.
 "Step" 7.5: added depht-of-field effect. A lot of noise appear, it decrease with more ray launched (seed [high resolution render](./result/highres_3.png)).
 
 ![step 7.5 render: right ball is blurry and very close, background is blurry](./result/step7.5.png)
+
+## Step 8: Add basic mesh rendering
+
+![step 8 render: two white cubes and a mirror ball](./result/step8.png)
