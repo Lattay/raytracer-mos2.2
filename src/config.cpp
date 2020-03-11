@@ -24,39 +24,31 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       // comment or empty line
     } else if(strncmp("ray_number ", buffer, 11) == 0){
       sscanf(buffer, "ray_number %d", &conf.ray_number);
-      std::cout << "ray_number " << conf.ray_number << std::endl;
     } else if(strncmp("W ", buffer, 2) == 0){
       sscanf(buffer, "W %d", &conf.W);
-      std::cout << "W " << conf.W << std::endl;
     } else if(strncmp("H ", buffer, 2) == 0){
       sscanf(buffer, "H %d", &conf.H);
-      std::cout << "H " << conf.H << std::endl;
     } else if(strncmp("field_depth ", buffer, 12) == 0){
       sscanf(buffer, "field_depth %lf", &conf.field_depth);
-      std::cout << "field_depth " << conf.field_depth << std::endl;
     } else if(strncmp("focal_opening ", buffer, 14) == 0){
       sscanf(buffer, "focal_opening %lf", &conf.focal_opening);
-      std::cout << "focal_opening " << conf.focal_opening << std::endl;
     } else if(strncmp("fov ", buffer, 4) == 0){
       sscanf(buffer, "fov %lf", &conf.fov);
-      std::cout << "fov " << conf.fov << std::endl;
     } else if(strncmp("light_intensity ", buffer, 16) == 0){
       sscanf(buffer, "light_intensity %lf", &conf.light_intensity);
-      std::cout << "light_intensity " << conf.light_intensity << std::endl;
+    } else if(strncmp("recursive_depth ", buffer, 16) == 0){
+      sscanf(buffer, "recursive_depth %d", &conf.recursive_depth);
     } else if(strncmp("antialiasing ", buffer, 13) == 0){
       sscanf(buffer, "antialiasing %lf", &conf.antialiasing);
-      std::cout << "antialiasing " << conf.antialiasing << std::endl;
     } else if(strncmp("camera ", buffer, 7) == 0){
       sscanf(buffer, "camera %lf %lf %lf %lf %lf %lf",
           &conf.camera[0], &conf.camera[1], &conf.camera[2],
           &conf.direction[0], &conf.direction[1], &conf.direction[2]);
-      std::cout << "camera (" << conf.camera.x() << ", " << conf.camera.y() << ", " << conf.camera.z() << ")" << std::endl;
     } else if(strncmp("sphere ", buffer, 7) == 0){
       Vec offset;
       double radius;
       int mat_num;
       sscanf(buffer, "sphere %d %lf %lf %lf %lf", &mat_num, &radius, &offset[0], &offset[1], &offset[2]);
-      std::cout << "Add a sphere" << std::endl;
       switch(mat_num){
         case 0:
           scene.add_new_sphere(Sphere(offset, radius, white));
@@ -90,7 +82,6 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       Vec offset;
       double scaling;
       sscanf(buffer, "mesh %s %lf %lf %lf %lf", obj_file, &scaling, &offset[0], &offset[1], &offset[2]);
-      std::cout << "Add a mesh from " << obj_file << std::endl;
       scene.add_mesh(*(new Mesh(obj_file, offset, scaling)));
     } else {
       std::cout << "unexpected line: " << buffer << std::endl;
@@ -101,3 +92,15 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
   std::cout << " done." << std::endl;
 }
 
+void show_config(Config& conf){
+  std::cout << "ray_number " << conf.ray_number << std::endl;
+  std::cout << "W " << conf.W << std::endl;
+  std::cout << "H " << conf.H << std::endl;
+  std::cout << "field_depth " << conf.field_depth << std::endl;
+  std::cout << "focal_opening " << conf.focal_opening << std::endl;
+  std::cout << "fov " << conf.fov << std::endl;
+  std::cout << "antialiasing " << conf.antialiasing << std::endl;
+  std::cout << "recursive_depth " << conf.recursive_depth << std::endl;
+  std::cout << "camera (" << conf.camera.x() << ", " << conf.camera.y() << ", " << conf.camera.z() << ")" << std::endl;
+  std::cout << "light_intensity " << conf.light_intensity << std::endl;
+}

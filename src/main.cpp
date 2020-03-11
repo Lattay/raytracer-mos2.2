@@ -23,6 +23,9 @@ int main() {
 
   Base cam_base = base_from(gconf.direction);
 
+  std::cout << "Current config:" << std::endl;
+  show_config(gconf);
+
   std::cout << "Scene ready." << std::endl;
   
   // Start rendering
@@ -52,7 +55,7 @@ int main() {
 
         Ray r(cam, dir.rotate(cam_base));
 
-        color = color + scene.get_color(r, light);
+        color = color + scene.get_color(r, light, gconf.recursive_depth);
       }
 
       color = vgamma(color / (double) gconf.ray_number);

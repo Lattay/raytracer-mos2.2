@@ -21,7 +21,6 @@ all: main
 
 run: main
 	./main
-	/home/theo/.local/bin/xdg-open ./image.png &
 
 debug: main
 	gdb ./main

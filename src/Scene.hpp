@@ -18,7 +18,7 @@ class Scene {
     Scene():
       m_objects() {};
     Intersection intersection(Ray const& ray) const;
-    Vec get_color(Ray const& ray, Light const& sourcr) const;
+    Vec get_color(Ray const& ray, Light const& source, int depth) const;
     Vec get_color(Ray const& ray, Light const& source, int k, bool inside) const;
 
     int add_mesh(Mesh const& mesh);

@@ -26,6 +26,7 @@ typedef struct {
   double focal_opening = 0;
 
   double fov = pi/3.0;
+  int recursive_depth = 5;
   double antialiasing = 2;
 
   Vec camera = Vec(0, 0, 55);
@@ -34,5 +35,6 @@ typedef struct {
 } Config;
 
 void init_config(const char* file_name, Config& conf, Scene& scene);
+void show_config(Config& conf);
 
 #endif

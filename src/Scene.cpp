@@ -34,8 +34,8 @@ Intersection Scene::intersection(Ray const& ray) const{
   return final_intersect;
 }
 
-Vec Scene::get_color(Ray const& ray, Light const& source) const{
-  return get_color(ray, source, 5, false);
+Vec Scene::get_color(Ray const& ray, Light const& source, int depth) const{
+  return get_color(ray, source, depth, false);
 }
 
 Vec Scene::get_color(Ray const& ray, Light const& source, int k, bool inside) const{
