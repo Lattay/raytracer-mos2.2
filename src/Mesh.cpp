@@ -97,7 +97,7 @@ MeshBox::MeshBox(RawMesh const& mesh, Indices indices):
   } else {
 
     int b_size = size / 2;
-    int t_size = size - b_size;
+    // int t_size = size - b_size;
 
     std::vector<LabeledX> verts[3] = {
       std::vector<LabeledX>(size),
@@ -396,10 +396,15 @@ Intersection Triangle::intersection(Ray const& r) const{
   Vec n = (m_ni + m_nk + m_nj).normalized();
 
   double n_dot_u = n.dot(r.direction());
-  if(n_dot_u < 1e-30){
+  if(n_dot_u > 1e-30){  // ray intersect the back of the face
     return Intersection();
   }
-  Vec p = r.origin() - (n.dot(m_i - r.origin())/n_dot_u) * r.direction();
+  Vec p = r.origin() + (n.dot(m_i - r.origin())/n_dot_u) * r.direction();
+
+  if(r.direction().dot(p - r.origin()) < 1e-30){  // intersection is behind the camera
+    return Intersection();
+  }
+
   Vec vp = p - m_i;
 
   double k_dot_k = vk.norm_sq();

@@ -94,11 +94,10 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
 
 void show_config(Config& conf){
   std::cout << "ray_number " << conf.ray_number << std::endl;
-  std::cout << "W " << conf.W << std::endl;
-  std::cout << "H " << conf.H << std::endl;
+  std::cout << "(W H) " << conf.W << ", " << conf.H << std::endl;
   std::cout << "field_depth " << conf.field_depth << std::endl;
   std::cout << "focal_opening " << conf.focal_opening << std::endl;
-  std::cout << "fov " << conf.fov << std::endl;
+  std::cout << "fov pi/" << pi/conf.fov << std::endl;
   std::cout << "antialiasing " << conf.antialiasing << std::endl;
   std::cout << "recursive_depth " << conf.recursive_depth << std::endl;
   std::cout << "camera (" << conf.camera.x() << ", " << conf.camera.y() << ", " << conf.camera.z() << ")" << std::endl;
