@@ -128,17 +128,15 @@ BoundingBox operator+(BoundingBox const& a, BoundingBox const& b);
 class MeshBox {
   protected:
     bool m_terminal;
-    Vec m_vmin, m_vmax, m_center; //, m_vmedian;
     BoundingBox m_bounding_box;
-    int m_first, m_length;
-    MeshBox const* m_top;
-    MeshBox const* m_bottom;
+    int m_first = 0, m_length = 0;
+    MeshBox const* m_top = NULL;
+    MeshBox const* m_bottom = NULL;
   public:
     MeshBox(): m_terminal(true), m_bounding_box() {};
     ~MeshBox();
     MeshBox(RawMesh const& mesh, int first, int length);
 
-    Vec box_size() const { return m_vmax - m_vmin; };
     BoxIntersection intersection(Ray const& r) const;
     BoundingBox const& box() const{ return m_bounding_box; };
 };

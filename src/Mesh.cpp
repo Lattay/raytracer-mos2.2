@@ -73,27 +73,28 @@ BoxIntersection operator&&(BoxIntersection const& a, BoxIntersection const& b){
 static const Vec veps(0.1, 0.1, 0.1);
 
 MeshBox::MeshBox(RawMesh const& mesh, int first, int length):
-  m_terminal(false), m_bounding_box(), m_first(first), m_length(length) {
+  m_terminal(true), m_bounding_box(), m_first(first), m_length(length) {
 
   if(length <= 0){
+    std::cout << "Error !\n";
     return;
   } else if(length <= 2){
-    m_terminal = true;
     Triangle tri(mesh, mesh.indices[m_first]);
-    m_bounding_box = BoundingBox(tri.i()-veps, tri.i()+veps) + BoundingBox(tri.j()-veps, tri.j()+veps) + BoundingBox(tri.k()-veps, tri.k()+veps);
-    m_center = tri.center();
+    m_bounding_box = BoundingBox(tri.i() - veps, tri.i() + veps)
+      + BoundingBox(tri.j() - veps, tri.j() + veps)
+      + BoundingBox(tri.k() - veps, tri.k() + veps);
     if(length == 2){
-      Triangle tri2(mesh, mesh.indices[m_first+1]);
-      m_center = (m_center + tri.center())/2;
-      m_bounding_box += BoundingBox(tri2.i()-veps, tri2.i()+veps)
-        + BoundingBox(tri2.j()-veps, tri2.j()+veps)
-        + BoundingBox(tri2.k()-veps, tri2.k()+veps);
+      Triangle tri2(mesh, mesh.indices[m_first + 1]);
+      m_bounding_box  += BoundingBox(tri2.i() - veps, tri2.i() + veps)
+        + BoundingBox(tri2.j() - veps, tri2.j() + veps)
+        + BoundingBox(tri2.k() - veps, tri2.k() + veps);
     }
   } else {
+    m_terminal = false;
     size_t first_half = length/2;
     size_t second_half = length - first_half;
     m_bottom = new MeshBox(mesh, first, first_half);
-    m_top = new MeshBox(mesh, first + first_half + 1, second_half);
+    m_top = new MeshBox(mesh, first + first_half, second_half);
 
     m_bounding_box = m_top->m_bounding_box + m_bottom->m_bounding_box;
 

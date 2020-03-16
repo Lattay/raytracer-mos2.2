@@ -8,30 +8,27 @@ typedef struct _b Base;
 
 class Vec {
   private:
-    union {
-      struct {double m_x, m_y, m_z;};
-      double v[3];
-    };
+    double m_v[3];
 
   public:
 
-    double x() const{return m_x;}
-    double y() const{return m_y;}
-    double z() const{return m_z;}
+    double x() const{return m_v[0];}
+    double y() const{return m_v[1];}
+    double z() const{return m_v[2];}
 
-    double r() const{return m_x;}
-    double g() const{return m_y;}
-    double b() const{return m_z;}
+    double r() const{return m_v[0];}
+    double g() const{return m_v[1];}
+    double b() const{return m_v[2];}
 
     double &operator[](int i){
       assert(i < 3 && i >= 0);
-      return v[i];
+      return m_v[i];
     }
 
     Vec():
-      m_x(0.0), m_y(0.0), m_z(0.0) {}
+      m_v{0.0, 0.0, 0.0} {};
     Vec(double x, double y, double z):
-      m_x(x),m_y(y),m_z(z) {}
+      m_v{x, y, z} {};
 
     double norm_sq() const;
     double norm() const;

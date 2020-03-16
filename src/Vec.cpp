@@ -35,11 +35,11 @@ std::ostream& operator<<(std::ostream& a, Vec const& b){
 }
 
 double Vec::dot(Vec const& b) const{
-  return m_x * b.x() + m_y * b.y() + m_z * b.z();
+  return m_v[0] * b.m_v[0] + m_v[1] * b.m_v[1] + m_v[2] * b.m_v[2];
 }
 
 double Vec::norm_sq() const{
-  return m_x * m_x + m_y * m_y + m_z * m_z;
+  return m_v[0] * m_v[0] + m_v[1] * m_v[1] + m_v[2] * m_v[2];
 }
 
 double Vec::norm() const{
@@ -48,9 +48,9 @@ double Vec::norm() const{
 
 Vec Vec::prod(Vec const& b) const{
   return Vec(
-      m_y * b.z() - m_z * b.y(),
-      m_z * b.x() - m_x * b.z(),
-      m_x * b.y() - m_y * b.x()
+      m_v[1] * b.m_v[2] - m_v[2] * b.m_v[1],
+      m_v[2] * b.m_v[0] - m_v[0] * b.m_v[2],
+      m_v[0] * b.m_v[1] - m_v[1] * b.m_v[0]
   );
 }
 
@@ -59,9 +59,9 @@ Vec Vec::normalized() const{
 }
 
 Vec Vec::rotate(Base b) const{
-  double x = b.x.x() * m_x + b.y.x() * m_y + b.z.x() * m_z;
-  double y = b.x.y() * m_x + b.y.y() * m_y + b.z.y() * m_z;
-  double z = b.x.z() * m_x + b.y.z() * m_y + b.z.z() * m_z;
+  double x = b.x.m_v[0] * m_v[0] + b.y.m_v[0] * m_v[1] + b.z.m_v[0] * m_v[2];
+  double y = b.x.m_v[1] * m_v[0] + b.y.m_v[1] * m_v[1] + b.z.m_v[1] * m_v[2];
+  double z = b.x.m_v[2] * m_v[0] + b.y.m_v[2] * m_v[1] + b.z.m_v[2] * m_v[2];
   return Vec(x, y, z);
 }
 

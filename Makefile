@@ -15,7 +15,7 @@ LFLAGS=-lgomp
 SRC=$(wildcard src/*.cpp)
 OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 
-.PHONY: all clean run test/meshbox
+.PHONY: all clean run test/%
 
 all: main
 
