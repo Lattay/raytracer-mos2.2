@@ -15,7 +15,7 @@ LFLAGS=-lgomp
 SRC=$(wildcard src/*.cpp)
 OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 
-.PHONY: all clean run
+.PHONY: all clean run test/meshbox
 
 all: main
 
@@ -28,7 +28,14 @@ debug: main
 main: $(OBJ)
 	$(CPP) $(CFLAGS) $(LFLAGS) $^ -o $@
 
+test/meshbox: test/meshbox.o build/Mesh.o build/Vec.o build/config.o build/Material.o build/random_tools.o build/Ray.o build/Sphere.o build/Scene.o
+	$(CPP) $(CFLAGS) $(LFLAGS) $^ -o $@
+	./$@
+
 build/%.o: src/%.cpp src/%.hpp | build/
+	$(CPP) $(CFLAGS) -c $< -o $@
+
+test/%.o: test/%.cpp
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 tags: $(SRC)
@@ -39,6 +46,7 @@ build/:
 
 clean:
 	rm -rf build
+	rm -f ./test/*.o
 
 wipe: clean
 	rm -f *.png
