@@ -24,10 +24,8 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       // comment or empty line
     } else if(strncmp("ray_number ", buffer, 11) == 0){
       sscanf(buffer, "ray_number %d", &conf.ray_number);
-    } else if(strncmp("W ", buffer, 2) == 0){
-      sscanf(buffer, "W %d", &conf.W);
-    } else if(strncmp("H ", buffer, 2) == 0){
-      sscanf(buffer, "H %d", &conf.H);
+    } else if(strncmp("size ", buffer, 5) == 0){
+      sscanf(buffer, "size %d %d", &conf.W, &conf.H);
     } else if(strncmp("field_depth ", buffer, 12) == 0){
       sscanf(buffer, "field_depth %lf", &conf.field_depth);
     } else if(strncmp("focal_opening ", buffer, 14) == 0){
