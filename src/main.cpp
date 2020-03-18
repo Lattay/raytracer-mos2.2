@@ -23,10 +23,10 @@ int main() {
 
   Base cam_base = base_from(gconf.direction);
 
-  std::cout << "Current config:" << std::endl;
+  std::cout << std::endl << "Current config:" << std::endl;
   show_config(gconf);
 
-  std::cout << "Scene ready." << std::endl;
+  std::cout << std::endl << "Scene ready." << std::endl;
   
   // Start rendering
   std::vector<float> image(gconf.W * gconf.H * 3, 0);

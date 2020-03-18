@@ -57,16 +57,19 @@ static bool lt(LabeledX const& a, LabeledX const& b){
 */
 
 BoxIntersection operator&&(BoxIntersection const& a, BoxIntersection const& b){
-  if(a.valid() && b.valid()){
-    BoxIntersection sum(a);
-    for(auto it = b.slices().begin(); it != b.slices().end(); ++it){
+  if(a.empty()) {
+    return b;
+  } else if(b.empty()){
+    return a;
+  } else {
+    BoxIntersection sum;
+    for(auto it = a.begin(); it != a.end(); ++it){
+      sum.append(*it);
+    }
+    for(auto it = b.begin(); it != b.end(); ++it){
       sum.append(*it);
     }
     return sum;
-  } else if (a.valid()){
-    return a;
-  } else {
-    return b;
   }
 }
 
@@ -76,8 +79,7 @@ MeshBox::MeshBox(RawMesh const& mesh, int first, int length):
   m_terminal(true), m_bounding_box(), m_first(first), m_length(length) {
 
   if(length <= 0){
-    std::cout << "Error !\n";
-    return;
+    throw "Length should not be null.";
   } else if(length <= 2){
     Triangle tri(mesh, mesh.indices[m_first]);
     m_bounding_box = BoundingBox(tri.i() - veps, tri.i() + veps)
@@ -151,14 +153,15 @@ MeshBox::~MeshBox(){
 }
 
 BoxIntersection MeshBox::intersection(Ray const& r) const{
-  if(m_bounding_box.intersect(r)){
-    if(m_terminal){
-      return BoxIntersection(m_first, m_length);
-    } else {
+  if(m_terminal){  // checking two triangles is faster than checking six rectangles
+    return BoxIntersection(m_first, m_length);
+  } else {
+    if(m_bounding_box.intersect(r)){
       return m_bottom->intersection(r) && m_top->intersection(r);
+    } else {
+      return BoxIntersection();
     }
   }
-  return BoxIntersection();
 }
 
 static inline double abs(double x){ return (x > 0.0) ? x : -x; }
@@ -271,7 +274,7 @@ void RawMesh::read_OBJ(const char* obj){
       uvs.push_back(vec);
     }
     if (line[0] == 'f') {
-      TriangleIndices t(0, 0, 0);
+      TriangleIndices t(0, 0, 0, 0, 0, 0, 0, 0, 0);
       int i0, i1, i2, i3;
       int j0, j1, j2, j3;
       int k0, k1, k2, k3;
@@ -333,7 +336,7 @@ void RawMesh::read_OBJ(const char* obj){
         if (consumedline[0] == '\n') break;
         if (consumedline[0] == '\0') break;
         nn = sscanf(consumedline, "%d/%d/%d%n", &i3, &j3, &k3, &offset);
-        TriangleIndices t2(0, 0, 0);
+        TriangleIndices t2(0, 0, 0, 0, 0, 0, 0, 0, 0);
         t2.faceGroup = curGroup;
         if (nn == 3) {
           if (i0 < 0) t2.vtxi = vertices.size() + i0; else	t2.vtxi = i0 - 1;
@@ -416,7 +419,7 @@ Intersection Mesh::intersection(Ray const& r) const{
 
   Intersection closest;  // invalid by default
 
-  if(box_inter.valid()){
+  if(!box_inter.empty()){
     for(auto it = box_inter.begin(); it != box_inter.end(); ++it){
       Triangle tri(*m_mesh, m_mesh->indices[*it]);
 
@@ -441,7 +444,7 @@ Texture const& Mesh::get_texture(size_t i) const{
 Intersection Triangle::intersection(Ray const& r) const{
   Vec vk = m_k - m_i;
   Vec vj = m_j - m_i;
-  Vec n = (m_ni + m_nk + m_nj).normalized();
+  Vec n = m_ni + m_nk + m_nj;
 
   double n_dot_u = n.dot(r.direction());
   if(n_dot_u < -1e-30){
@@ -462,7 +465,8 @@ Intersection Triangle::intersection(Ray const& r) const{
       double v = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
 
       if(u >= 0 && v >= 0 && (u + v) < 1){
-        return Intersection(vp + m_i, n, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, vp + m_i)*/);
+        Vec n_rend(u * m_ni + v * m_nj + (1 - u - v) * m_nk);
+        return Intersection(vp + m_i, n_rend, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, vp + m_i)*/);
       } else {  // intersection is out of the triangle
         return Intersection();
       }
@@ -472,6 +476,5 @@ Intersection Triangle::intersection(Ray const& r) const{
   } else {  // ray intersect the face from the back or is almost tangeant to it
     return Intersection();
   }
-
 }
 

@@ -14,7 +14,7 @@ class TriangleIndices {
     int ni, nj, nk;
     int faceGroup;
 
-    TriangleIndices(int vtxi, int vtxj, int vtxk, int ni = -1, int nj = -1, int nk = -1, int uvi = -1, int uvj = -1, int uvk = -1):
+    TriangleIndices(int vtxi, int vtxj, int vtxk, int ni, int nj, int nk, int uvi, int uvj, int uvk):
       vtxi(vtxi), vtxj(vtxj), vtxk(vtxk), uvi(uvi), uvj(uvj), uvk(uvk), ni(ni), nj(nj), nk(nk) { };
 };
 
@@ -46,10 +46,10 @@ class Triangle final: public Object {
 
   public:
     Triangle(RawMesh const& mesh, TriangleIndices idc):
-      m_i(mesh.vertices[idc.vtxi]), m_j(mesh.vertices[idc.vtxj]), m_k(mesh.vertices[idc.vtxk]),
-      m_ni(mesh.normals[idc.ni]), m_nj(mesh.normals[idc.nj]), m_nk(mesh.normals[idc.nk]),
-      m_uvi(mesh.uvs[idc.uvi]), m_uvj(mesh.uvs[idc.uvj]), m_uvk(mesh.uvs[idc.uvk])
-      /*, m_tex(mesh.textures[0]) */ {};
+      m_i(mesh.vertices.at(idc.vtxi)), m_j(mesh.vertices.at(idc.vtxj)), m_k(mesh.vertices.at(idc.vtxk)),
+      m_ni(mesh.normals.at(idc.ni)), m_nj(mesh.normals.at(idc.nj)), m_nk(mesh.normals.at(idc.nk)),
+      m_uvi(mesh.uvs.at(idc.uvi)), m_uvj(mesh.uvs.at(idc.uvj)), m_uvk(mesh.uvs.at(idc.uvk))
+      /*, m_tex(mesh.textures.at(0)) */ {};
     virtual Intersection intersection(Ray const& r) const;
     Vec center() const{ return (m_i + m_j + m_k)/3; };
     Vec i() const{ return m_i; };
@@ -61,50 +61,21 @@ typedef struct {size_t first, length;} Slice;
 
 class BoxIntersection {
   private:
-    bool m_valid;
-    std::vector<Slice> m_slices;
+    std::vector<size_t> m_indices;
 
   public:
-    class iterator: public std::iterator<std::input_iterator_tag, size_t, size_t, const size_t*, size_t >{
-      size_t m_k;
-      size_t m_slice_k;
-      BoxIntersection const* m_inter;
-      Slice m_slice;
-
-      public:
-        iterator(BoxIntersection const* inter):
-          m_k(0), m_slice_k(0), m_inter(inter), m_slice(inter->slice(0)) {}
-        iterator(BoxIntersection const* inter, size_t k, size_t slice_k):
-          m_k(k), m_slice_k(slice_k), m_inter(inter), m_slice(inter->slice(0)) {}
-        iterator& operator++() {
-          if(m_k < m_slice.length - 1){
-            m_k++;
-          } else {
-            m_k = 0;
-            m_slice_k++;
-            if(m_slice_k < m_inter->size()){
-              m_slice = m_inter->slice(m_slice_k);
-            }
-          }
-          return *this;
-        }
-        bool operator==(iterator other) const {
-          return m_k == other.m_k && m_slice_k == other.m_slice_k;
-        }
-        bool operator!=(iterator other) const { return !(*this == other); }
-        reference operator*() const {return m_k + m_slice.first;}
-    };
     BoxIntersection():
-      m_valid(false), m_slices(0) {};
+      m_indices(0) {};
     BoxIntersection(size_t start, size_t length):
-      m_valid(true), m_slices(1, {start, length}) {};
-    bool valid() const{ return m_valid; }
-    size_t size() const { return m_slices.size(); };
-    void append(Slice slice) { m_slices.push_back(slice); };
-    Slice slice(size_t i) const{ return m_slices[i]; }
-    iterator begin() const { return iterator(this); };
-    iterator end() const { return iterator(this, 0, m_slices.size()); };
-    std::vector<Slice> const& slices() const{ return m_slices; };
+      m_indices(length, 0) {
+        for(size_t i = 0; i < length; i++) m_indices[i] = i + start;
+    };
+    bool empty() const{ return m_indices.empty(); }
+    size_t size() const { return m_indices.size(); };
+    void append(size_t i) { m_indices.push_back(i); };
+    size_t get(size_t i) const{ return m_indices[i]; }
+    std::vector<size_t>::const_iterator begin() const{ return m_indices.begin(); };
+    std::vector<size_t>::const_iterator end() const{ return m_indices.end(); };
 };
 
 BoxIntersection operator&&(BoxIntersection const& a, BoxIntersection const& b);
@@ -130,8 +101,8 @@ class MeshBox {
     bool m_terminal;
     BoundingBox m_bounding_box;
     int m_first = 0, m_length = 0;
-    MeshBox const* m_top = NULL;
-    MeshBox const* m_bottom = NULL;
+    MeshBox const* m_top = nullptr;
+    MeshBox const* m_bottom = nullptr;
   public:
     MeshBox(): m_terminal(true), m_bounding_box() {};
     ~MeshBox();
