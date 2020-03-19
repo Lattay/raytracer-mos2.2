@@ -57,20 +57,14 @@ static bool lt(LabeledX const& a, LabeledX const& b){
 */
 
 BoxIntersection operator&&(BoxIntersection const& a, BoxIntersection const& b){
-  if(a.empty()) {
-    return b;
-  } else if(b.empty()){
-    return a;
-  } else {
-    BoxIntersection sum;
-    for(auto it = a.begin(); it != a.end(); ++it){
-      sum.append(*it);
-    }
-    for(auto it = b.begin(); it != b.end(); ++it){
-      sum.append(*it);
-    }
-    return sum;
+  BoxIntersection sum;
+  for(auto it = a.begin(); it != a.end(); ++it){
+    sum.append(*it);
   }
+  for(auto it = b.begin(); it != b.end(); ++it){
+    sum.append(*it);
+  }
+  return sum;
 }
 
 static const Vec veps(0.1, 0.1, 0.1);
@@ -444,7 +438,11 @@ Texture const& Mesh::get_texture(size_t i) const{
 Intersection Triangle::intersection(Ray const& r) const{
   Vec vk = m_k - m_i;
   Vec vj = m_j - m_i;
-  Vec n = m_ni + m_nk + m_nj;
+  Vec n = vj.prod(vk);
+
+  if(n.dot(m_ni + m_nj + m_nk) < 0){
+    n = -n;
+  }
 
   double n_dot_u = n.dot(r.direction());
   if(n_dot_u < -1e-30){
@@ -460,12 +458,17 @@ Intersection Triangle::intersection(Ray const& r) const{
 
       double inv_denom = 1/(k_dot_k * j_dot_j - k_dot_j * k_dot_j);
 
-      // u, v and w (= 1 - u - v) are the barycentric coordinates
+      // u, v and t (= 1 - u - v) are the barycentric coordinates
+      // t + u + v = 1
+      // and (all equivalent):
+      // 0 = t PI + u PJ + v PK
+      // P = t I + u J + v K
+      // P = I + u IJ + v IK
       double u = (j_dot_j * k_dot_p - k_dot_j * j_dot_p) * inv_denom;
       double v = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
 
       if(u >= 0 && v >= 0 && (u + v) < 1){
-        Vec n_rend(u * m_ni + v * m_nj + (1 - u - v) * m_nk);
+        Vec n_rend((1 - u - v) * m_ni + u * m_nj + v * m_nk);
         return Intersection(vp + m_i, n_rend, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, vp + m_i)*/);
       } else {  // intersection is out of the triangle
         return Intersection();
