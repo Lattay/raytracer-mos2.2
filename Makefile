@@ -3,7 +3,7 @@ DEBUG=0
 OMP=1
 CFLAGS=-Wall -Wextra -Wpedantic --std=c++11
 ifeq ($(DEBUG),1)
-	CFLAGS+=-g -Og
+	CFLAGS+=-g -O0
 else
 	CFLAGS+=-O3 
 endif

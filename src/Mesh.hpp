@@ -18,8 +18,6 @@ class TriangleIndices {
       vtxi(vtxi), vtxj(vtxj), vtxk(vtxk), uvi(uvi), uvj(uvj), uvk(uvk), ni(ni), nj(nj), nk(nk) { };
 };
 
-typedef std::vector<size_t> Indices;
-
 class Triangle;
 
 class RawMesh {
@@ -45,6 +43,7 @@ class Triangle final: public Object {
     // Texture m_tex;
 
   public:
+    Triangle() {};
     Triangle(RawMesh const& mesh, TriangleIndices idc):
       m_i(mesh.vertices.at(idc.vtxi)), m_j(mesh.vertices.at(idc.vtxj)), m_k(mesh.vertices.at(idc.vtxk)),
       m_ni(mesh.normals.at(idc.ni)), m_nj(mesh.normals.at(idc.nj)), m_nk(mesh.normals.at(idc.nk)),
@@ -66,10 +65,9 @@ class BoxIntersection {
   public:
     BoxIntersection():
       m_indices(0) {};
-    BoxIntersection(size_t start, size_t length):
-      m_indices(length, 0) {
-        for(size_t i = 0; i < length; i++) m_indices[i] = i + start;
-    };
+    BoxIntersection(std::vector<size_t> const& indices):
+      m_indices(indices.begin(), indices.end()) {};
+
     bool empty() const{ return m_indices.empty(); }
     size_t size() const { return m_indices.size(); };
     void append(size_t i) { m_indices.push_back(i); };
@@ -91,22 +89,27 @@ class BoundingBox {
     bool intersect(Ray const& r) const;
     Vec min() const { return m_vmin; };
     Vec max() const { return m_vmax; };
+    double vol() const {
+      Vec d = m_vmax - m_vmin; return d.x()*d.y()*d.z();
+    };
     BoundingBox& operator+=(BoundingBox const& b);
 };
 
 BoundingBox operator+(BoundingBox const& a, BoundingBox const& b);
+BoundingBox operator*(BoundingBox const& a, BoundingBox const& b);
 
 class MeshBox {
   protected:
     bool m_terminal;
+    bool m_empty;
     BoundingBox m_bounding_box;
-    int m_first = 0, m_length = 0;
+    std::vector<size_t> m_indices;
     MeshBox const* m_top = nullptr;
     MeshBox const* m_bottom = nullptr;
   public:
-    MeshBox(): m_terminal(true), m_bounding_box() {};
+    MeshBox(): m_terminal(true), m_empty(true), m_bounding_box(), m_indices(0) {};
     ~MeshBox();
-    MeshBox(RawMesh const& mesh, int first, int length);
+    MeshBox(RawMesh const& mesh, std::vector<size_t> const& indices);
 
     BoxIntersection intersection(Ray const& r) const;
     BoundingBox const& box() const{ return m_bounding_box; };
@@ -116,17 +119,17 @@ class Mesh final: public Object{
 
   private:
     RawMesh* m_mesh;
-    MeshBox m_box;
+    MeshBox* m_box;
 
   public:
-    Mesh() {};
+    // Mesh() {};
     Mesh(const char* obj, const Vec& offset, double scaling);
     ~Mesh();
 
 
     Texture const& get_texture(size_t i) const;
     virtual Intersection intersection(Ray const& r) const;
-    BoundingBox const& box() const{ return m_box.box(); };
+    BoundingBox const& box() const{ return m_box->box(); };
 };
 
 #endif

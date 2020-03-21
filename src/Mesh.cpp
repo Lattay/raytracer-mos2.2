@@ -23,15 +23,19 @@ Mesh::Mesh(const char* obj, const Vec& offset, double scaling){
   std::sort(m_mesh->indices.begin(), m_mesh->indices.end(), lt_tri);
 
   std::cout << "Building mesh box tree..." << std::endl;
-  m_box = MeshBox(*m_mesh, 0, m_mesh->indices.size());
+  size_t length = m_mesh->indices.size();
+  std::vector<size_t> v(length);
+  for(size_t i = 0; i < length; i++)
+    v[i] = i;
+  m_box = new MeshBox(*m_mesh, v);
 
   std::cout << "Box: ("
-    << m_box.box().min().x() << ", "
-    << m_box.box().min().y() << ", "
-    << m_box.box().min().z() << ") -> ("
-    << m_box.box().max().x() << ", "
-    << m_box.box().max().y() << ", "
-    << m_box.box().max().z() << ")" << std::endl;
+    << m_box->box().min().x() << ", "
+    << m_box->box().min().y() << ", "
+    << m_box->box().min().z() << ") -> ("
+    << m_box->box().max().x() << ", "
+    << m_box->box().max().y() << ", "
+    << m_box->box().max().z() << ")" << std::endl;
 
 
   std::cout << "Loading mesh done." << std::endl;
@@ -39,6 +43,7 @@ Mesh::Mesh(const char* obj, const Vec& offset, double scaling){
 
 Mesh::~Mesh(){
   delete m_mesh;
+  delete m_box;
 }
 
 RawMesh::RawMesh(const char* obj, const Vec& offset, double scaling){
@@ -48,94 +53,97 @@ RawMesh::RawMesh(const char* obj, const Vec& offset, double scaling){
   }
 }
 
-/*
-typedef struct {int i; double x;} LabeledX;
-
-static bool lt(LabeledX const& a, LabeledX const& b){
-  return a.x < b.x;
-}
-*/
-
 BoxIntersection operator&&(BoxIntersection const& a, BoxIntersection const& b){
   BoxIntersection sum;
-  for(auto it = a.begin(); it != a.end(); ++it){
-    sum.append(*it);
+  if(!a.empty()){
+    for(auto it = a.begin(); it != a.end(); ++it){
+      sum.append(*it);
+    }
   }
-  for(auto it = b.begin(); it != b.end(); ++it){
-    sum.append(*it);
+  if(!b.empty()){
+    for(auto it = b.begin(); it != b.end(); ++it){
+      sum.append(*it);
+    }
   }
   return sum;
 }
 
-static const Vec veps(0.1, 0.1, 0.1);
+static const Vec veps(1e-5, 1e-5, 1e-5);
 
-MeshBox::MeshBox(RawMesh const& mesh, int first, int length):
-  m_terminal(true), m_bounding_box(), m_first(first), m_length(length) {
+MeshBox::MeshBox(RawMesh const& mesh, std::vector<size_t> const& indices):
+  m_terminal(true), m_bounding_box(), m_indices(indices) {
+
+  size_t length = m_indices.size();
 
   if(length <= 0){
-    throw "Length should not be null.";
+    // empty indices
   } else if(length <= 2){
-    Triangle tri(mesh, mesh.indices[m_first]);
+    Triangle tri(mesh, mesh.indices[m_indices[0]]);
     m_bounding_box = BoundingBox(tri.i() - veps, tri.i() + veps)
       + BoundingBox(tri.j() - veps, tri.j() + veps)
       + BoundingBox(tri.k() - veps, tri.k() + veps);
     if(length == 2){
-      Triangle tri2(mesh, mesh.indices[m_first + 1]);
+      Triangle tri2(mesh, mesh.indices[m_indices[1]]);
       m_bounding_box  += BoundingBox(tri2.i() - veps, tri2.i() + veps)
         + BoundingBox(tri2.j() - veps, tri2.j() + veps)
         + BoundingBox(tri2.k() - veps, tri2.k() + veps);
     }
   } else {
     m_terminal = false;
-    size_t first_half = length/2;
-    size_t second_half = length - first_half;
-    m_bottom = new MeshBox(mesh, first, first_half);
-    m_top = new MeshBox(mesh, first + first_half, second_half);
 
-    m_bounding_box = m_top->m_bounding_box + m_bottom->m_bounding_box;
-
-    /*
-    std::vector<LabeledX> verts[3] = {
-      std::vector<LabeledX>(length),
-      std::vector<LabeledX>(length),
-      std::vector<LabeledX>(length),
-    };
-
-    for(int i = 0; i < length; i++){
-      Vec v = Triangle(mesh, i+first);
-      verts[0][i] = {i, v.x()};
-      verts[1][i] = {i, v.y()};
-      verts[2][i] = {i, v.z()};
+    std::vector<Triangle> tris(length);
+    Vec center(0, 0, 0);
+    for(size_t i = 0; i < length; i++){
+      tris[i] = Triangle(mesh, mesh.indices[m_indices[i]]);
+      center = center + tris[i].center()/length;
     }
 
-    std::sort(verts[0].begin(), verts[0].end(), lt);
-    std::sort(verts[1].begin(), verts[1].end(), lt);
-    std::sort(verts[2].begin(), verts[2].end(), lt);
+    Vec deviation;
 
-    m_vmin = Vec(verts[0][0].x, verts[1][0].x, verts[2][0].x);
-    m_vmax = Vec(verts[0][length-1].x, verts[1][length-1].x, verts[2][length-1].x);
-    */
-
-    /*
-    double vx, vy, vz;
-    vx = (*verts[0].end()).x - (*verts[0].begin()).x;
-    vy = (*verts[1].end()).x - (*verts[1].begin()).x;
-    vz = (*verts[2].end()).x - (*verts[2].begin()).x;
-    double mv = std::max(vx, std::max(vy, vz));
-
-    int best_dir = vx == mv ? 0 : (vy == mv ? 1 : 2);
-
-    Indices bottom(b_size), top(t_size);
-    for(int i = 0; i < b_size; i++){
-      bottom[i] = verts[best_dir][i].i;
+    for(size_t i = 0; i < length; i++){
+      Vec dev = tris[i].center()/length - center;
+      deviation[0] += dev[0]*dev[0]/length;
+      deviation[1] += dev[1]*dev[1]/length;
+      deviation[2] += dev[2]*dev[2]/length;
     }
-    for(int i = 0; i < t_size; i++){
-      top[i] = verts[best_dir][b_size + i].i;
+
+    double mv = std::max(deviation.x(), std::max(deviation.y(), deviation.z()));
+    int best_dir;
+    Vec median_normal;
+    if(mv == deviation.x()){
+      best_dir = 0;
+      median_normal = Vec(1, 0, 0);
+    } else if(mv == deviation.y()){
+      best_dir = 1;
+      median_normal = Vec(0, 1, 0);
+    } else {
+      best_dir = 2;
+      median_normal = Vec(0, 0, 1);
     }
+
+    size_t m = length/2;
+
+    // nth_element partitionate m_indices such that the mth element is greater
+    // than any before and lower than any after in term of best_dir coordinate.
+    nth_element(m_indices.begin(), m_indices.begin()+m, m_indices.end(),
+        [mesh, best_dir](size_t i, size_t j)->bool{
+          return Triangle(mesh, mesh.indices[i]).center()[best_dir]
+            < Triangle(mesh, mesh.indices[j]).center()[best_dir];
+        }
+    );
+
+    // then 
+    std::vector<size_t> bottom(m_indices.begin(), m_indices.begin()+m);
+    std::vector<size_t> top(m_indices.begin()+m, m_indices.end());
 
     m_bottom = new MeshBox(mesh, bottom);
     m_top = new MeshBox(mesh, top);
-    */
+
+    m_bounding_box = m_top->m_bounding_box + m_bottom->m_bounding_box;
+
+    double superpos = (m_top->m_bounding_box * m_bottom->m_bounding_box).vol();
+    std::cout << "Superposition: " << 2*superpos/(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol())*100 << "% "
+      << 0.5*(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol()) << "\n";
   }
 }
 
@@ -147,14 +155,14 @@ MeshBox::~MeshBox(){
 }
 
 BoxIntersection MeshBox::intersection(Ray const& r) const{
-  if(m_terminal){  // checking two triangles is faster than checking six rectangles
-    return BoxIntersection(m_first, m_length);
+  if(m_indices.empty()){
+    return BoxIntersection();
+  } else if(m_terminal){  // checking two triangles is faster than checking six rectangles
+      return BoxIntersection(m_indices);
+  } else if(m_bounding_box.intersect(r)){
+    return m_bottom->intersection(r) && m_top->intersection(r);
   } else {
-    if(m_bounding_box.intersect(r)){
-      return m_bottom->intersection(r) && m_top->intersection(r);
-    } else {
-      return BoxIntersection();
-    }
+    return BoxIntersection();
   }
 }
 
@@ -199,6 +207,19 @@ BoundingBox operator+(BoundingBox const& a, BoundingBox const& b){
   for(int i = 0; i < 3; i++){
     min[i] = std::min(a.min()[i], b.min()[i]);
     max[i] = std::max(a.max()[i], b.max()[i]);
+  }
+  return BoundingBox(min, max);
+}
+
+BoundingBox operator*(BoundingBox const& a, BoundingBox const& b){
+  Vec min, max;
+  for(int i = 0; i < 3; i++){
+    min[i] = std::max(a.min()[i], b.min()[i]);
+    max[i] = std::min(a.max()[i], b.max()[i]);
+
+    if(min[i] > max[i]){
+      min[i] = max[i];
+    }
   }
   return BoundingBox(min, max);
 }
@@ -405,15 +426,18 @@ void RawMesh::add_texture(const char* filename){
   textures.push_back(Texture(filename));
 }
 
+// static int m = 0;
+
 Intersection Mesh::intersection(Ray const& r) const{
 
   double d_2, min_d_2 = 1e30;
   
-  BoxIntersection box_inter(m_box.intersection(r));
+  BoxIntersection box_inter(m_box->intersection(r));
 
   Intersection closest;  // invalid by default
 
   if(!box_inter.empty()){
+    int i = 0;
     for(auto it = box_inter.begin(); it != box_inter.end(); ++it){
       Triangle tri(*m_mesh, m_mesh->indices[*it]);
 
@@ -425,7 +449,13 @@ Intersection Mesh::intersection(Ray const& r) const{
           min_d_2 = d_2;
         }
       }
+      i++;
     }
+    // if(i > m){
+    //   m = i;
+    //   std::cout << "up " << m << "\n";
+    // }
+
   }
 
   return closest;
@@ -468,7 +498,7 @@ Intersection Triangle::intersection(Ray const& r) const{
       double v = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
 
       if(u >= 0 && v >= 0 && (u + v) < 1){
-        Vec n_rend((1 - u - v) * m_ni + u * m_nj + v * m_nk);
+        Vec n_rend((1 - u - v) * m_ni + v * m_nj + u * m_nk);
         return Intersection(vp + m_i, n_rend, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, vp + m_i)*/);
       } else {  // intersection is out of the triangle
         return Intersection();
