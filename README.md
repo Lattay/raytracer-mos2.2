@@ -49,3 +49,9 @@ The code for a given step correspond to a git tag.
 ## Step 8: Add basic mesh rendering
 
 ![step 8 render: two white cubes and a mirror ball](./result/step8.png)
+
+## Step 9: Add acceleration structure for mesh rendering
+
+and also shading normal interpolation to smooth edges
+
+![step 9 render: a smooth-ish monkey head](./result/step9.png)
