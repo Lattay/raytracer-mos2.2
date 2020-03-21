@@ -7,6 +7,7 @@
 class Material {
 
   public:
+    virtual ~Material() {};
     virtual Vec color() const{return Vec(0, 0, 0);};
     virtual bool direct_lighting() const{return false;};
     virtual bool transparent() const{return false;};
@@ -19,6 +20,7 @@ class Diffuse: public Material {
     Vec m_color;
   public:
     Diffuse(Vec color): m_color(0.9 * color){};
+    ~Diffuse() {};
     virtual bool direct_lighting() const{return true;};
     virtual Vec color() const{return m_color;};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
@@ -29,6 +31,7 @@ class Reflective: public Material {
     double m_loss;
   public:
     Reflective(double loss): m_loss(loss){};
+    ~Reflective() {};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
     virtual Vec color() const{return {1, 1, 1};};
 };
@@ -38,23 +41,10 @@ class Transparent: public Material {
     double m_index;
   public:
     Transparent(double index): m_index(index) {};
+    ~Transparent() {};
     virtual double index() const{return m_index;};
     virtual bool transparent() const{return true;};
     virtual Sample reflex_dir(Vec const& source, Vec const& n) const;
-};
-
-class Texture {
-  private:
-    const char* m_filename;
-    std::vector<char> m_raw;
-
-  public:
-    Texture(const char* filename): m_filename(filename){
-      // load(); // FIXME: Enable texture loading when needed.
-    };
-
-    void load();
-    Diffuse get_diffuse(Vec const& i, Vec const& j, Vec const& k, Vec const& p) const;
 };
 
 const Diffuse white_emit(Vec(1, 1, 1));

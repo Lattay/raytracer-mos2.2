@@ -10,13 +10,23 @@ class Intersection {
     Vec m_position;
     Vec m_normal;
     bool m_mesh;
+    bool m_own_mat = false;
     Material const* m_material;
 
   public:
     Intersection():
       m_valid(false), m_position(), m_normal(), m_mesh(false), m_material(&white_emit) {};
     Intersection(Vec pos, Vec norm, Material const& mat):
-      m_valid(true), m_position(pos), m_normal(norm.normalized()), m_mesh(false), m_material(&mat) {};
+      m_valid(true), m_position(pos), m_normal(norm.normalized()), m_mesh(false), m_own_mat(false), m_material(&mat) {};
+    Intersection(Vec pos, Vec norm, Material* mat):
+      m_valid(true), m_position(pos), m_normal(norm.normalized()), m_mesh(false), m_own_mat(true), m_material(mat) {};
+
+    ~Intersection(){
+      /*
+      if(m_own_mat)
+        delete m_material;
+      */
+    }
 
     bool valid() const{return m_valid;};
     Vec position() const{return m_position;};

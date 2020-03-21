@@ -6,13 +6,14 @@
 #include "Ray.hpp"
 #include "Intersection.hpp"
 #include "Material.hpp"
+#include "Texture.hpp"
 
 class TriangleIndices {
   public:
     int vtxi, vtxj, vtxk;
     int uvi, uvj, uvk;
     int ni, nj, nk;
-    int faceGroup;
+    int faceGroup = -1;
 
     TriangleIndices(int vtxi, int vtxj, int vtxk, int ni, int nj, int nk, int uvi, int uvj, int uvk):
       vtxi(vtxi), vtxj(vtxj), vtxk(vtxk), uvi(uvi), uvj(uvj), uvk(uvk), ni(ni), nj(nj), nk(nk) { };
@@ -28,32 +29,34 @@ class RawMesh {
     std::vector<Vec> normals;
     std::vector<Vec> uvs; // Vector en 3D mais on n'utilise que 2 composantes
     std::vector<Vec> vertex_colors;
-    std::vector<Texture> textures;
+    std::vector<Texture*> textures;
 
     RawMesh() {};
     RawMesh(const char* obj, const Vec& offset, double scaling);
 
     void read_OBJ(const char* obj);
-    void add_texture(const char* filename); 
+    void add_texture(Texture* text);
+    Texture const* get_texture(size_t i) const;
 };
 
 class Triangle final: public Object {
   private:
     Vec m_i, m_j, m_k, m_ni, m_nj, m_nk, m_uvi, m_uvj, m_uvk;
-    // Texture m_tex;
+    Texture const* m_tex = nullptr;
 
   public:
     Triangle() {};
     Triangle(RawMesh const& mesh, TriangleIndices idc):
       m_i(mesh.vertices.at(idc.vtxi)), m_j(mesh.vertices.at(idc.vtxj)), m_k(mesh.vertices.at(idc.vtxk)),
       m_ni(mesh.normals.at(idc.ni)), m_nj(mesh.normals.at(idc.nj)), m_nk(mesh.normals.at(idc.nk)),
-      m_uvi(mesh.uvs.at(idc.uvi)), m_uvj(mesh.uvs.at(idc.uvj)), m_uvk(mesh.uvs.at(idc.uvk))
-      /*, m_tex(mesh.textures.at(0)) */ {};
+      m_uvi(mesh.uvs.at(idc.uvi)), m_uvj(mesh.uvs.at(idc.uvj)), m_uvk(mesh.uvs.at(idc.uvk)),
+      m_tex(mesh.get_texture(idc.faceGroup)) {};
     virtual Intersection intersection(Ray const& r) const;
     Vec center() const{ return (m_i + m_j + m_k)/3; };
     Vec i() const{ return m_i; };
     Vec j() const{ return m_j; };
     Vec k() const{ return m_k; };
+    Diffuse* get_color(Vec pos) const;
 };
 
 typedef struct {size_t first, length;} Slice;
@@ -118,8 +121,8 @@ class MeshBox {
 class Mesh final: public Object{
 
   private:
-    RawMesh* m_mesh;
-    MeshBox* m_box;
+    RawMesh* m_mesh = nullptr;
+    MeshBox* m_box = nullptr;
 
   public:
     // Mesh() {};
@@ -127,7 +130,8 @@ class Mesh final: public Object{
     ~Mesh();
 
 
-    Texture const& get_texture(size_t i) const;
+    void load_texture(const char* texture);
+    Texture const* get_texture(size_t i) const;
     virtual Intersection intersection(Ray const& r) const;
     BoundingBox const& box() const{ return m_box->box(); };
 };

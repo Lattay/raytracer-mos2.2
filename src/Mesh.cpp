@@ -2,6 +2,7 @@
 #include <map>
 #include <algorithm>
 #include <iostream>
+#include "../vendor/stb_image.h"
 #include "Mesh.hpp"
 #include "Sphere.hpp"
 
@@ -141,9 +142,9 @@ MeshBox::MeshBox(RawMesh const& mesh, std::vector<size_t> const& indices):
 
     m_bounding_box = m_top->m_bounding_box + m_bottom->m_bounding_box;
 
-    double superpos = (m_top->m_bounding_box * m_bottom->m_bounding_box).vol();
-    std::cout << "Superposition: " << 2*superpos/(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol())*100 << "% "
-      << 0.5*(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol()) << "\n";
+    // double superpos = (m_top->m_bounding_box * m_bottom->m_bounding_box).vol();
+    // std::cout << "Superposition: " << 2*superpos/(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol())*100 << "% "
+    //   << 0.5*(m_top->m_bounding_box.vol() + m_bottom->m_bounding_box.vol()) << "\n";
   }
 }
 
@@ -166,14 +167,14 @@ BoxIntersection MeshBox::intersection(Ray const& r) const{
   }
 }
 
-static inline double abs(double x){ return (x > 0.0) ? x : -x; }
+static inline double dabs(double x){ return (x > 0.0) ? x : -x; }
 
 /* Return true if ray r intersect the rectangle defined in the plane (corner, n)
  * by the point corner and the side vectors t_x and t_y.
  */
 static bool intersect_rectangle(Ray const& r, Vec corner, Vec n, Vec t_x, Vec t_y){
   double n_dot_u = n.dot(r.direction());
-  if(abs(n_dot_u) < 1e-30)  // u is tangeant to the plane
+  if(dabs(n_dot_u) < 1e-30)  // u is tangeant to the plane
       return false;
   double alpha = n.dot(corner - r.origin())/n_dot_u;
   if(alpha < 0)
@@ -422,11 +423,16 @@ void RawMesh::read_OBJ(const char* obj){
   fclose(f);
 }
 
-void RawMesh::add_texture(const char* filename){
-  textures.push_back(Texture(filename));
+void RawMesh::add_texture(Texture* tex){
+  textures.push_back(tex);
 }
 
-// static int m = 0;
+Texture const* RawMesh::get_texture(size_t i) const{
+  if(i < textures.size())
+    return textures[i];
+  else
+    return nullptr;
+}
 
 Intersection Mesh::intersection(Ray const& r) const{
 
@@ -461,8 +467,12 @@ Intersection Mesh::intersection(Ray const& r) const{
   return closest;
 }
 
-Texture const& Mesh::get_texture(size_t i) const{
-  return m_mesh->textures[m_mesh->indices[i].vtxi];
+void Mesh::load_texture(const char* texture){
+  m_mesh->add_texture(new Texture(texture));
+}
+
+Texture const* Mesh::get_texture(size_t i) const{
+  return m_mesh->get_texture(i);
 }
 
 Intersection Triangle::intersection(Ray const& r) const{
@@ -494,12 +504,13 @@ Intersection Triangle::intersection(Ray const& r) const{
       // 0 = t PI + u PJ + v PK
       // P = t I + u J + v K
       // P = I + u IJ + v IK
-      double u = (j_dot_j * k_dot_p - k_dot_j * j_dot_p) * inv_denom;
-      double v = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
+      double u = (k_dot_k * j_dot_p - k_dot_j * k_dot_p) * inv_denom;
+      double v = (j_dot_j * k_dot_p - k_dot_j * j_dot_p) * inv_denom;
 
       if(u >= 0 && v >= 0 && (u + v) < 1){
-        Vec n_rend((1 - u - v) * m_ni + v * m_nj + u * m_nk);
-        return Intersection(vp + m_i, n_rend, white_emit /*m_tex.get_diffuse(m_i, m_j, m_k, vp + m_i)*/);
+        Vec n_rend((1 - u - v) * m_ni + u * m_nj + v * m_nk);
+        Vec vtex((1 - u - v) * m_uvi + u * m_uvj + v * m_uvk);
+        return Intersection(vp + m_i, n_rend, get_color(vtex));
       } else {  // intersection is out of the triangle
         return Intersection();
       }
@@ -511,3 +522,10 @@ Intersection Triangle::intersection(Ray const& r) const{
   }
 }
 
+Diffuse* Triangle::get_color(Vec pos) const{
+  if(m_tex != nullptr){
+    return new Diffuse(m_tex->get_color(pos));
+  } else {
+    return new Diffuse(white_emit);
+  }
+}

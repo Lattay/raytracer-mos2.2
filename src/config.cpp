@@ -81,6 +81,15 @@ void init_config(const char* file_name, Config& conf, Scene& scene){
       double scaling;
       sscanf(buffer, "mesh %s %lf %lf %lf %lf", obj_file, &scaling, &offset[0], &offset[1], &offset[2]);
       scene.add_mesh(*(new Mesh(obj_file, offset, scaling)));
+    } else if(strncmp("tmesh ", buffer, 6) == 0){
+      char obj_file[255];
+      char texfile[255];
+      Vec offset;
+      double scaling;
+      sscanf(buffer, "tmesh %s %s %lf %lf %lf %lf", obj_file, texfile, &scaling, &offset[0], &offset[1], &offset[2]);
+      Mesh* m = new Mesh(obj_file, offset, scaling);
+      m->load_texture(texfile);
+      scene.add_mesh(*m);
     } else {
       std::cout << "unexpected line: " << buffer << std::endl;
     }
