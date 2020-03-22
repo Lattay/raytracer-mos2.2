@@ -1,0 +1,220 @@
+\documentclass[12pt]{article}
+\usepackage[left=6em, right=6em, top=6em, bottom=6em]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{fontspec}
+\usepackage[francais]{babel}
+\usepackage{stmaryrd} 
+\usepackage{graphicx}
+\usepackage{dsfont}
+\usepackage{fancyhdr}
+\usepackage{color}
+% \usepackage{physics}
+\usepackage{pdfpages}
+\usepackage{listings}
+\lstset{language=C++,
+        basicstyle=\ttfamily,
+        keywordstyle=\color{blue}\ttfamily,
+        stringstyle=\color{red}\ttfamily,
+        commentstyle=\color{magenta}\ttfamily,
+        morecomment=[l][\color{green}]{\#}}
+
+\title{MOS 2.2: Informatique graphique\\
+Programation d'un raytracer}
+\author{Théo Cavignac}
+
+\newcommand{\raytracing}{\textit{raytracing}}
+\newcommand\id[1]{\texttt{#1}}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+
+Le \raytracing{} ou <<lancer de rayon>> est une technique de rendu de scène 3D qui consiste à simuler le trajet de rayons lumineux hypothètiques arrivant sur le capteur d'une camera virtuelle.
+Cette technique se basé sur l'optique géometrique permet d'obtenir des images très réaliste contenant des effets de lumière variés en suivant une méthode assez simple.
+Elle s'oppose au \textit{rasterizing} qui est une technique plus légère consistant à projeter des triangles sur le capteur de la caméra virtuelle et à faire des approximation pour calculer l'éclairage.
+
+Ce document rend compte de la réalisation d'un code de \raytracing{} en C++ au cours du MOS 2.2.
+Il est rédigé en trois parties.
+La première partie présente les bases géométriques utilisé et les résultats obtenu au cours des premières étapes de dévellopement.
+La partie~\ref{sec:light} présente les effets de lumières possibles grace aux lancer de rayons stochastiques.
+La partie~\ref{sec:mesh} présente l'ajout des maillages comme primitives, les structures d'accélérations associé et l'implémentation du support des textures.
+En annexes se trouvent d'autres rendu produit avec des paramètres plus lourds (et donc des résultats plus propres).
+
+\section{Base du raytracing\label{sec:basics}}
+Les premières étapes (tags step1 à steps\_5\_6) du dévellopement consistent à impléménter la capacité à rendre des sphères de couleurs ombré.
+
+La méthode consiste à lancer des rayons de lumière pour chaque pixel dont l'origine est le centre de la caméra et la direction est donnée par la position du pixel sur le <<capteur>>.
+
+On commence par détecter une sphère placé devant la caméra virtuelle.
+Pour cela on implémente une fonction permettant de déterminer l'existence d'une intersection entre une sphère et un rayon.
+En présence d'une telle intersection on rend le pixel correspondant blanc.
+Sinon on rend le pixel noir. On obtient la figure~\ref{fig:step1}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=12cm]{../result/step1}
+  \caption{Détection d'une sphère devant la camera}\label{fig:step1}
+\end{figure}
+
+On va ensuite utiliser la position de l'intersection pour calculer la luminosité réfléchie par la surface vers la camera.
+Pour cela on considère que la surface est blanche et parfaitement diffusive, ce qui correspond à une surface ayant une microstructure très rugeuse comme du plâtre.
+La formule correspond est implémenté en C++ dans la figure~\ref{code:platre}.
+
+Cette formule exprime deux fait important:
+\begin{itemize}
+    \item si le rayon de lumière provenant de la source eclaire la surface de façon tangeante, aucune lumière n'est réfléchi, si le rayon est normal à la surface un maximum de lumière est réflechi
+    \item l'intensité rééfléchie ne dépend pas de la direction du rayon allant vers la caméra car la lumière est réflechie de façon homogène dans toutes les directions (sauf si le rayon est derrière la surface)
+\end{itemize}
+
+Le résultat est visible dans la figure~\ref{fig:step2}
+
+\begin{figure}
+  \begin{lstlisting}[frame=single]
+    // s est une instance de Sphre et r une instance de Ray
+    // la méthode intersection retourne un vecteur correspond
+    // à la position de l'intersection
+    Vec p = s.intersection(r);
+
+    // n est le vecteur normal à la surface au point
+    // d'intersection
+    Vec n = (p - s.origin()).normalized();
+
+    Vec vl = light - p;
+
+    // I est l'intensité de lumière reçu pas la caméra
+    double I = I0 * std::max(0.0, n.dot(vl.normalized()))
+        / vl.norm_sq();
+  \end{lstlisting}
+  \caption{Calcul de l'intensité reçu par la caméra après réflexion sur la surface de la sphère}\label{code:platre}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step2}
+  \caption{Sphere diffusive ombré}\label{fig:step2}
+\end{figure}
+
+L'étape suivante consiste à refactoriser le code pour:
+\begin{itemize}
+  \item faire le rendu de multiples spheres
+  \item attribuer une couleur au spheres
+\end{itemize}
+
+Pour cela on a définit une classe \id{Sphere} qui est définie par un centre, un rayon et un albedo (un vecteur 3D correspondant à la couleur en format RGB).
+On a également une classe \id{Scene} qui contient plusieurs instances de \id{Sphere} ainsi qu'une instance de \id{Light}.
+Cette classe est chargé de calculer la couleur d'un rayon donné avec une méthode \id{get\_color}.
+Cette méthode restera au centre du programme tout au long de son dévellopement.
+
+On définie une scène dans laquelle cinqs sphères de rayon 1000 formeront des murs encadrant un sphère de rayon 10 au centre de la sphère.
+Pour supporter les couleurs on réutilise la formule donné dans la figure~\ref{code:platre} mais multipliant \id{I} par l'albedo de la sphère pour obtenir le vecteur couleur du rayon final.
+
+On obtient la figure~\ref{fig:step3}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step3}
+  \caption{Support d'une scene contentant plusieurs spheres coloré}\label{fig:step3}
+\end{figure}
+
+On applique aussi pour la première fois un transformation gamma inverse qui permet de rendre compte de la non linéarité de l'œil humain dans la perception de la lumière ce qui a pour effet de diminuer les contrastes de l'image.
+
+Enfin on ajoute les ombres en cherchant si un objet se trouve sur le chemin entre la source de lumière et le point d'intersection entre la surface et le rayon.
+Si un tel objet existe le point en question n'est pas (directement) éclairé et apparait donc noir.
+On obtient la figure~\ref{fig:step4}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step4}
+  \caption{Sphères avec des ombres portés}\label{fig:step4}
+\end{figure}
+
+Plus tard l'albedo de \id{Sphere} est remplacé par une instance d'une classe \id{Material} qui servira de classe mère pour différent type de matériaux correspondant à différentes BRDF.
+On ajoute notement un materiaux réfléchissant (d'abord représenté par un drapeau booléen \id{mirror} dans la classe \id{Material} puis par une classe fille spécialisé \id{Reflective} cf.\ step7) dont la BRDF consiste en un dirac dans la direction du rayon réfléchie, c'est à dire que toute la lumière reçu est réfléchie dans la même direction.
+
+Cet effet est le premier qui traduit le phénomène d'éclairage indirecte que l'on généralise dans l'étape suivante.
+On obitient la figure~\ref{fig:step5}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step5}
+  \caption{Introduction des surfaces réfléchissantes}\label{fig:step5}
+\end{figure}
+
+
+\section{Effets de lumière réaliste\label{sec:light}}
+Dans cette partie (tags steps\_5\_6+ à step7) on introduit le lancer de rayon stochastique pour réaliser divers effets de lumière réalistes tel que l'éclairage indirecte qui permet les ombres douces, la transparence, les sources étendues et autres.
+
+Le premier effet est la transparence qui consiste à relancer un rayon depuis le premier point d'intersection dans une direction donnée par la loi de Descartes.
+Comme il y a dans la plupart des cas un rayon réfléchie et un rayon refracté on choisi aléatoire l'une de ces deux directions pour lancer le nouveau rayon sans avoir une croissance exponentielle du nombre de rayon.
+La probabilité de chaque rayon est donnée par les facteurs de reflexion et de transmission en puissance approximé par la formule de shlick.
+Pour lisser cet effet aléatoire on lance donc plusieurs rayons pour chaque pixel et on moyenne les intensités obtenus.
+Pour lancer le nouveau rayon \id{get\_color} s'appelle récursivement avec une profondeur de récursion finie.
+A chaque fois que l'intersection tombe sur un surface transparente, un rayon réfléchie ou réfracté est relancé et ainsi on construit la lumière finale vue par la caméra.
+L'aspect stochastique fait apparaitre un peu de bruit dans l'image qui est lissé en lançant plus de rayons par pixel.
+On peut voir cet effet dans la figure~\ref{fig:step6.5}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.45\textwidth]{pic/step6_2r}
+  \includegraphics[width=0.45\textwidth]{pic/step6_30r}
+  \caption{Rendu avec une sphère transparente en lançant 2 rayons par pixel (droite) et 30 rayons par pixel (gauche)}\label{fig:step6.5}
+\end{figure}
+
+On ajoute ensuite l'éclairage indirecte.
+Cela consiste à relancer un rayon également pour les surfaces diffuse et a utiliser la couleur de ce rayon comme éclairage supplémentaire (en plus de l'éclairage directe).
+C'est ici que la création des classes \id{Material} commence à faire sens car elle permet d'unifier la réflexion totale des surfaces réfléchissantes et la réflexion stochastique des surfaces diffuse au travers d'une méthode \id{reflex\_dir} qui associe à un rayon émergent et une normale, un rayon incident.
+Dans le cas de la réflexion totale cette méthode est déterministe.
+En revanche dans le cas des surfaces diffuse elle est stochastique et renvoie une direction selon un distribution qui permet toute les directions de l'hémisphère en favorisant les directions proches de la normale.
+Cette fonction ne dépend pas du rayon émergent car la surface est parfaitement diffuse.
+La figure~\ref{code:random_cos} montre la fonction \id{random\_cos} qui permet de générer une direction et fourni également la probabilité de cette direction particulière qui sert de facteur dans la méthode de Monte-Carlo qui se cache derrière cette méthode.
+
+Concretement l'effet de cette modification est que les ombres ne sont pas totalement noires, car elles reçoivent un peu de lumière réfléchie sur d'autres objets.
+
+Un autre effet cousin de celui-ci est d'étendre la source de lumière qui était jusqu'ici ponctuelle.
+On considère maintenant une sphère qui emet de façon homogène une lumière blanche.
+Cette sphère est représenté par la classe \id{Light} qui contient maintenant un rayon.
+
+Lorsque l'on calcule l'éclairage directe on utilise \id{random\_cos} pour choisir un point sur la surface de la sphere lumière. Ce point sert ensuite de source ponctuelle pour le point courrant.
+La luminausité du point correspond à la luminosité nominale de la source pondéré par le cosinus de l'angle entre la normale au point sur la sphère lumineuse et la direction vers l'objet éclairé.
+
+Le résultat de ces deux ajouts est visible dans la figure~\ref{fig:step7}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step7}
+  \caption{Ajout de sources étendu et d'éclairage indirecte}\label{fig:step7}
+\end{figure}
+
+Enfin les derniers effets ajouté utilisant le lancer de rayons stochastique sont l'effet de profondeur de champ qui consiste a simuler l'effet de l'optique d'une caméra sur a netteté des différents plan de l'image et l'anti-crénelage.
+
+Ces deux effets consistent à perturber le rayon initiale.
+La profondeur de champ est obtenu en perturbant l'origine du rayon, mais en choisisant la direction de sorte quelle que soit l'origine les rayons converge au même point d'un plan parallèle au plan du capteur.
+Ce plan est définit par la longeur de champ que l'on fixe pour la figure~\ref{fig:step7.5} à 55 unité, soit le plan dans lequel se trouve la sphère miroire.
+
+L'anti-crénelage consiste à perturbé légerement la direction du rayon de sorte qu'il ne passe pas systématiquement au même endroit du pixel.
+On obtient donc des transitions plus douces entre les surfaces qui font disparaitres les pixels.
+
+\section{Maillage et structures d'accélération\label{sec:mesh}}
+
+Dans cette partie on ajoute le support des maillages ainsi qu'un certain nombre d'améliorations du code, comprenant des refactorisations facilitant la maintenabilité et le déboguage.
+
+Entre autre la possibilité de spécifier tout les paramètres du rendu (position de la caméra, composition de la scène, paramètres de convergence tel que le nombre de rayons par pixel etc\ldots).
+
+TODO: Rendu du maillage, structure d'accélération, textures
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step9}
+  \caption{Rendu de maillages simple}\label{fig:step9}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/step10}
+  \caption{Rendu d'un maillage complexe avec une texture}\label{fig:../result/step10}
+\end{figure}
+
+\end{document}

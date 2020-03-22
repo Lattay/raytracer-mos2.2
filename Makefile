@@ -15,9 +15,12 @@ LFLAGS=-lgomp
 SRC=$(wildcard src/*.cpp)
 OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 
-.PHONY: all clean run test/%
+.PHONY: all clean run report test/%
 
-all: main
+all: main report
+
+report:
+	(cd report && make)
 
 run: main
 	./main
@@ -45,6 +48,7 @@ build/:
 	mkdir -p build
 
 clean:
+	(cd report && make clean)
 	rm -rf build
 	rm -f ./test/*.o
 

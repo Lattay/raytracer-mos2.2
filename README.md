@@ -55,3 +55,7 @@ The code for a given step correspond to a git tag.
 and also shading normal interpolation to smooth edges
 
 ![step 9 render: a smooth-ish monkey head](./result/step9.png)
+
+## Step 10: Add texture support
+
+![step 10 render: textured skull](./result/step10.png)
