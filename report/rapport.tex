@@ -71,7 +71,7 @@ Cette formule exprime deux fait important:
 
 Le résultat est visible dans la figure~\ref{fig:step2}
 
-\begin{figure}
+\begin{figure}[ht]
   \begin{lstlisting}[frame=single]
     // s est une instance de Sphre et r une instance de Ray
     // la méthode intersection retourne un vecteur correspond
@@ -131,7 +131,7 @@ On obtient la figure~\ref{fig:step4}.
   \caption{Sphères avec des ombres portés}\label{fig:step4}
 \end{figure}
 
-Plus tard l'albedo de \id{Sphere} est remplacé par une instance d'une classe \id{Material} qui servira de classe mère pour différent type de matériaux correspondant à différentes BRDF.
+Plus tard l'albedo de \id{Sphere} est remplacé par une instance d'une classe \id{Material} qui servira de classe mère pour différent type de matériaux correspondant à différentes BRDF\@.
 On ajoute notement un materiaux réfléchissant (d'abord représenté par un drapeau booléen \id{mirror} dans la classe \id{Material} puis par une classe fille spécialisé \id{Reflective} cf.\ step7) dont la BRDF consiste en un dirac dans la direction du rayon réfléchie, c'est à dire que toute la lumière reçu est réfléchie dans la même direction.
 
 Cet effet est le premier qui traduit le phénomène d'éclairage indirecte que l'on généralise dans l'étape suivante.
@@ -201,20 +201,125 @@ On obtient donc des transitions plus douces entre les surfaces qui font disparai
 
 Dans cette partie on ajoute le support des maillages ainsi qu'un certain nombre d'améliorations du code, comprenant des refactorisations facilitant la maintenabilité et le déboguage.
 
-Entre autre la possibilité de spécifier tout les paramètres du rendu (position de la caméra, composition de la scène, paramètres de convergence tel que le nombre de rayons par pixel etc\ldots).
+Notamment l'ajout d'un parser de fichier de configuration modelé sur le parser de fichier OBJ permet de spécifier tout les paramètres de la simulation sans recompiler le projet.
+De cette façon il était plus simple de faire varier certains paramètres pour comprendre la nature des bogues rencontré au cours de l'implémentation des maillages.
+Les paramètres modifiables comprenent entre autres:
+\begin{itemize}
+    \item la taille de l'image
+    \item le nombre de rayon lancé par pixel
+    \item la position et l'orientation de la caméra
+    \item la composition de la scène
+\end{itemize}
 
-TODO: Rendu du maillage, structure d'accélération, textures
+Un exemple de fichier de configuration est présenté en annexe dans la figure~\ref{code:config}. 
+
+En ce qui concerne l'implémentation des maillage, la première étape est de rendre un maillage simple, chargé depuis un fichier OBJ avec un le parser fourni en cours.
+
+Le rendu basique consite à parcourir la liste des triangles et à déterminer une éventuelle intersection.
+L'intersection la plus proche de la caméra est alors considéré comme l'intersection avec le maillage.
+
+L'intersection avec un triangle consiste à déterminer une intersection $P$ avec le plan incluant le triangle, par la donnée d'un sommet du triangle est de la normale géométrique du triangle déterminé par produit vectoriel de deux cotés du triangle.
+L'orientation de cette normale est détérminé d'après les normales d'ombrages fournies par le ficher OBJ\@.
+Une fois l'intersection dans le plan définie on calcule les coordonées barycentriques en résolvant le système vectoriel~\ref{eq:barycentre}.
+Si les inconnues $t$, $u$ et $v$ sont dans l'intervale $[0, 1]$ alors le point $P$ est compris dans le trangle $IJK$.
+Ces paramètres peuvent ensuite être utilisé plus tard pour extrapoler les coordonées UV pour la texture et la normale d'ombrage.
+
+\begin{equation}
+  \left\{
+    \begin{array}{lcr}
+      t + u + v & = & 1\\
+      t I + u J + v K & = & P
+      \label{eq:barycentre}
+    \end{array}
+  \right.
+\end{equation}
+
+Cet ajout permet d'afficher des maillages simples comme les cubes de la figure~\ref{fig:step8}.
+
+On ajoute ensuite une structure d'accélération qui permet de discriminer plus rapidement quels triangles doivent être testé de sorte que le calcul de l'intersection entre un maillage et un rayon ne soit plus une fonction linéaire du nombre de triangle mais une fonction logarithmique.
+Pour cela on divise au préalable les triangles du maillages en deux ensembles disjoints ayant des boites englobantes non confondu.
+Puis pour chaque sous ensemble on répète l'opération de partition jusqu'à avoir des ensembles de un ou deux triangles seulement.
+Le calcul de l'intersection rayon/maillage consiste alors à intersecter le rayon avec les boites englobantes et à ne tester que les triangles qui sont dans les plus petites boites intersectées.
+On utilise pour cela un algorithme récursif qui déterminer les boites intersecté en descendant et qui construit l'ensemble des triangles à tester en remontant.
+
+Pour l'opération de partition on cherche à avoir des boites équilibrés.
+On cherche donc la direction (aligné sur les axes) qui offre la plus grande variance dans la position des triangles puis on partitione les triangles autour de la médiane des positions sur cet axe.
+Ainsi on divise à chaque étape le nombre de triangle par boites par deux.
+Cette opération est possible en temps linéaire (à chaque itération, donc avec une complexité en $O(n \log{n})$ pour le maillage totale, $n$ étant le nombre de triangle) grace au calcule de variance (opération linéaire) et à la fonction standard \id{std::nth\_element} qui permet de faire la partition et le calcul de la médiane en même temps et en temps linéaire (en moyenne, grâce a une variation de l'algorithme \textit{quickselect}).
+
+On peut observer dans cette figure l'effet de l'interpolation de normales sur un même maillage.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=12cm]{../result/step9}
-  \caption{Rendu de maillages simple}\label{fig:step9}
+  \includegraphics[width=0.48\textwidth]{pic/flat_monkey.png}
+  \includegraphics[width=0.48\textwidth]{../result/step9}
+  \caption{Rendu de maillages simple avec normales géométriques (gauche) et normales interpolé (droite)}\label{fig:step9}
 \end{figure}
+
+Enfin on ajoute le support des textures.
+Cela consiste à créer à la volé un materiaux diffusif pour l'intersection avec le triangle dont la couleur correspond à celle d'un pixel de l'image texture.
+La position du pixel est interpolé d'après les coordonées UV associé à chaque sommets du triangle.
+On obtient alors la figure~\ref{fig:step10}.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=12cm]{../result/step10}
-  \caption{Rendu d'un maillage complexe avec une texture}\label{fig:../result/step10}
+  \caption{Rendu d'un maillage complexe (40728 faces dont 39288 quads soit 80016 triangles) avec une texture $1024\times1024$}\label{fig:step10}
+\end{figure}
+
+\clearpage
+\section*{Annexes}
+
+\begin{figure}[ht!]
+  \begin{lstlisting}[frame=single]
+    ## Rendering config
+    ray_number 20
+    size 512 512
+    field_depth 55.0
+    focal_opening 0.0
+    fov 1.0472
+    recursive_depth 5
+    # antialiasing level; level 0: no antialiasing,
+    # level 10: too strong
+    antialiasing 5
+    # camera x y z dx dy dz;
+    # (x, y, z): camera center,
+    # (dx, dy, dz): camera direction
+    camera 20 10 55 -0.6 -0.3 -1
+    light_intensity 5e8
+    ## Scene setup
+    # sphere mat_id radius x y z
+    # ceiling (0: white)
+    sphere 0 940 0 1000 0
+    # floor (1: blue)
+    sphere 1 985 0 -1000 0
+    # front wall (3: green)
+    sphere 3 940 0 0 -1000
+    # left and right wall (4: yellow)
+    sphere 4 940 -1000 0 0
+    sphere 4 940 1000 0 0
+    # tmesh mesh_file texture_file scale x y z
+    tmesh ./misc/skull.obj ./misc/Skull.jpg 1 0 0 20
+  \end{lstlisting}
+  \caption{Exemple de fichier de configuration pour la version finale du programme}\label{code:config}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/highres_2}
+  \caption{Démonstration des objets transparents et des ombres douces (sans les sources étendues) en haute résolution}\label{fig:highres_2}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/highres_4}
+  \caption{Démonstration des maillages simples en haute résolution}\label{fig:highres_4}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{../result/highres_4}
+  \caption{Démonstration de toute les fonctionnalitées en haute résolution}\label{fig:highres_5}
 \end{figure}
 
 \end{document}
